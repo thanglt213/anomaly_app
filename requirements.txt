@@ -1,2 +1,9 @@
 streamlit
 streamlit_option_menu
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+joblib
+plotly.express
