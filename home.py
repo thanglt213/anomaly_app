@@ -8,17 +8,17 @@ def app():
     # Tạo option-menu không có tiêu đề
     selected_option = option_menu(
         menu_title=None,  # Ẩn tiêu đề menu
-        options=["Option 1", "Option 2", "Option 3"],  # Các tùy chọn
+        options=["Bồi thường sức khỏe", "Kế toán", "Xe cơ giới"],  # Các tùy chọn
         icons=["box", "book", "gear"],  # Icon cho từng mục
         default_index=0,  # Mục mặc định
         orientation="horizontal"  # Hiển thị menu ngang
     )
 
     # Hiển thị nội dung dựa trên lựa chọn
-    if selected_option == "Option 1":
+    if selected_option == "Bồi thường sức khỏe":
         MedAlertAI.app()
-    elif selected_option == "Option 2":
+    elif selected_option == "Kế toán":
         st.write("You selected Option 2!")
-    elif selected_option == "Option 3":
+    elif selected_option == "Xe cơ giới":
         st.write("You selected Option 3!")
 
