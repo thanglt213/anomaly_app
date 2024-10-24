@@ -88,6 +88,10 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 
 # Main Streamlit app
 def app():
+    st.title("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!")
+    display_resized_image("ica.jpg")
+    #st.info("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!", icon="ℹ️")
+    
     # Tạo option-menu không có tiêu đề
     selected_option = option_menu(
         menu_title=None,  # Ẩn tiêu đề menu
@@ -98,10 +102,6 @@ def app():
     )
 
     if selected_option == 'Bảo hiểm sức khỏe':
-        st.title("Phát hiện bất thường trong bồi thường bảo hiểm sức khỏe")
-        display_resized_image("ica.jpg")
-        st.info("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!", icon="ℹ️")
-
         model_file = 'isolation_forest_model.pkl'
         model_exists = os.path.exists(model_file)
 
@@ -173,11 +173,9 @@ def app():
                 st.error(f"Có lỗi xảy ra khi xử lý tệp: {e}")
 
     elif selected_option == 'Bảo hiểm xe':
-        st.title("Nội dung cho Bảo hiểm xe")
         st.write("Tính năng sẽ được cập nhật sau.")
 
     elif selected_option == 'Kế toán':
-        st.title("Nội dung cho Kế toán")
         st.write("Tính năng sẽ được cập nhật sau.")
 
 if __name__ == "__main__":
