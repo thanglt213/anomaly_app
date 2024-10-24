@@ -8,15 +8,15 @@ import numpy as np
 import plotly.express as px
 from PIL import Image
 
+# Hàm tải và xử lý ảnh
 def display_resized_image(image_path, new_height_divider=2):
-    """Hàm tải và xử lý ảnh."""
     image = Image.open(image_path)
     width, height = image.size
     resized_image = image.resize((width, height // new_height_divider))
     st.image(resized_image, use_column_width=True)
 
+# Hàm mã hóa và chuẩn hóa dữ liệu
 def preprocess_data(train_data, predict_data, numeric_cols):
-    """Hàm mã hóa và chuẩn hóa dữ liệu."""
     combined_data = pd.concat([train_data, predict_data], ignore_index=True)
 
     for col in numeric_cols:
@@ -28,24 +28,25 @@ def preprocess_data(train_data, predict_data, numeric_cols):
             le = LabelEncoder()
             combined_data[col] = le.fit_transform(combined_data[col].fillna('Unknown'))
             label_encoders[col] = le
-    
+
     scaler = StandardScaler()
     combined_data[numeric_cols] = scaler.fit_transform(combined_data[numeric_cols])
     
     return combined_data, label_encoders
 
+# Hàm huấn luyện IsolationForest
 def train_isolation_forest(train_data, contamination_rate=0.05):
-    """Hàm huấn luyện IsolationForest."""
     model = IsolationForest(n_estimators=100, contamination=contamination_rate, random_state=42)
     model.fit(train_data.select_dtypes(include=[np.number]))
     return model
 
+# Hàm hiển thị biểu đồ stacked bar
 def plot_prediction_chart(data, group_by_col, title, ylabel, key):
-    """Hàm hiển thị biểu đồ stacked bar."""
     prediction_counts = data.groupby([group_by_col, 'Prediction']).size().reset_index(name='Count')
     prediction_counts = prediction_counts.sort_values(by='Count', ascending=False)
 
     custom_colors = ['#1f77b4', '#ff7f0e']
+    
     fig = px.bar(
         prediction_counts, 
         x=group_by_col, 
@@ -56,16 +57,16 @@ def plot_prediction_chart(data, group_by_col, title, ylabel, key):
         text_auto=True,
         color_discrete_sequence=custom_colors
     )
-    
+
     fig.update_layout(
-        xaxis_title="",  
-        yaxis_title="",  
+        xaxis_title="",
+        yaxis_title=""
     )
     
     st.plotly_chart(fig, key=key)
 
+# Hàm hiển thị biểu đồ tỷ lệ phần trăm
 def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
-    """Hàm hiển thị biểu đồ tỷ lệ phần trăm."""
     prediction_counts = data.groupby(group_by_col)['Prediction'].value_counts(normalize=True).unstack().fillna(0)
     prediction_counts['Bất thường'] = prediction_counts.get('Bất thường', 0)
     prediction_counts = prediction_counts.reset_index()
@@ -77,16 +78,16 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
                  title=title, 
                  labels={group_by_col: ylabel, 'Bất thường': 'Tỷ lệ phần trăm'}, 
                  text=prediction_counts['Bất thường'].map('{:.1%}'.format))
-    
+
     fig.update_layout(
-        xaxis_title="",  
-        yaxis_title="",  
+        xaxis_title="",
+        yaxis_title=""
     )
     
     st.plotly_chart(fig, key=key)
 
-def main():
-    """Hàm chính cho Streamlit app."""
+# Main Streamlit app
+def app():
     st.title("Phát hiện bất thường trong bồi thường bảo hiểm sức khỏe")
     display_resized_image("ica.jpg")
     st.info("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!", icon="ℹ️")
@@ -109,7 +110,7 @@ def main():
 
             numeric_columns = ['days_to_report', 'requested_amount_per_day']
             combined_data, label_encoders = preprocess_data(train_data, predict_data, numeric_columns)
-            
+
             num_train_rows = train_data.shape[0]
             train_encoded = combined_data.iloc[:num_train_rows]
             predict_encoded = combined_data.iloc[num_train_rows:]
@@ -143,7 +144,7 @@ def main():
                     with st.spinner('Đang thực hiện dự đoán...'):
                         predictions = model.predict(predict_encoded)
                     predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
-                    
+
                     st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
                     st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
 
@@ -153,10 +154,10 @@ def main():
                 with st.expander("Trực quan hóa kết quả...", expanded=True):
                     plot_prediction_chart(predict_data, 'distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác', key='key1')
                     plot_prediction_percent_chart(predict_data, 'distribution_channel', 'Tỷ lệ % bất thường theo kênh khai thác:', 'Kênh khai thác', key='key2')
-                    
+
                     plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 'Chi nhánh', key='key3')
                     plot_prediction_percent_chart(predict_data, 'branch', 'Tỷ lệ % bất thường theo chi nhánh:', 'Chi nhánh', key='key4')
-                    
+
                     plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện', key='key5')
                     plot_prediction_percent_chart(predict_data, 'hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện', key='key6')
 
@@ -164,6 +165,6 @@ def main():
             st.error(f"Có lỗi xảy ra khi xử lý tệp: {e}")
 
 if __name__ == "__main__":
-    main()
+    app()
 
 
