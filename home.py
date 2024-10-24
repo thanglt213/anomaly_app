@@ -89,8 +89,8 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 # Main Streamlit app
 def app():
     st.title("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!")
-    display_resized_image("ica.jpg")
-    #st.info("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!", icon="ℹ️")
+    #display_resized_image("ica.jpg")
+    st.info("\nBất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!\n", icon="ℹ️")
     
     # Tạo option-menu không có tiêu đề
     selected_option = option_menu(
