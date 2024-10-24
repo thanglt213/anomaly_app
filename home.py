@@ -16,7 +16,7 @@ def app():
 
     # Hiển thị nội dung dựa trên lựa chọn
     if selected_option == "Option 1":
-        st.write("You selected Option 1!")
+        MedAlertAI.app()
     elif selected_option == "Option 2":
         st.write("You selected Option 2!")
     elif selected_option == "Option 3":
