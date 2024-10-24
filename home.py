@@ -7,6 +7,7 @@ import os
 import numpy as np
 import plotly.express as px
 from PIL import Image
+from streamlit_option_menu import option_menu
 
 # Hàm tải và xử lý ảnh
 def display_resized_image(image_path, new_height_divider=2):
@@ -87,10 +88,16 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 
 # Main Streamlit app
 def app():
-    st.sidebar.title("Menu")
-    option = st.sidebar.selectbox("Chọn mục:", ['Bảo hiểm sức khỏe', 'Bảo hiểm xe', 'Kế toán'])
+    # Tạo option-menu không có tiêu đề
+    selected_option = option_menu(
+        menu_title=None,  # Ẩn tiêu đề menu
+        options=["Bảo hiểm sức khỏe", "Bảo hiểm xe", "Kế toán"],  # Các tùy chọn
+        icons=["heart", "car", "book"],  # Icon cho từng mục
+        default_index=0,  # Mục mặc định
+        orientation="horizontal"  # Hiển thị menu ngang
+    )
 
-    if option == 'Bảo hiểm sức khỏe':
+    if selected_option == 'Bảo hiểm sức khỏe':
         st.title("Phát hiện bất thường trong bồi thường bảo hiểm sức khỏe")
         display_resized_image("ica.jpg")
         st.info("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!", icon="ℹ️")
@@ -165,11 +172,11 @@ def app():
             except Exception as e:
                 st.error(f"Có lỗi xảy ra khi xử lý tệp: {e}")
 
-    elif option == 'Bảo hiểm xe':
+    elif selected_option == 'Bảo hiểm xe':
         st.title("Nội dung cho Bảo hiểm xe")
         st.write("Tính năng sẽ được cập nhật sau.")
 
-    elif option == 'Kế toán':
+    elif selected_option == 'Kế toán':
         st.title("Nội dung cho Kế toán")
         st.write("Tính năng sẽ được cập nhật sau.")
 
