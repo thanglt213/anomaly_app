@@ -8,7 +8,7 @@ import contact
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",
-        options=["Home", "About", "Contact"],
+        options=["Home", "About"],
         icons=["house", "info-circle", "envelope"],
         menu_icon="cast",
         default_index=0,
@@ -19,6 +19,5 @@ if selected == "Home":
     home.app()
 elif selected == "About":
     about.app()
-elif selected == "Contact":
-    contact.app()
+
 
