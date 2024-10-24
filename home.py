@@ -88,7 +88,7 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 
 # Main Streamlit app
 def app():
-    st.title("Bất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!")
+    st.title("Một ứng dụng AI: Phát hiện bất thường trong hoạt động bảo hiểm")
     #display_resized_image("ica.jpg")
     st.info("\nBất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!\n", icon="ℹ️")
     
