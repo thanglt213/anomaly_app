@@ -8,7 +8,7 @@ import contact
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",
-        options=["Home1", "About"],
+        options=["Home", "About"],
         icons=["house", "info-circle"],
         menu_icon="cast",
         default_index=0,
