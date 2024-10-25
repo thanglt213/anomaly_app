@@ -92,7 +92,7 @@ def predict_with_kmeans_model(kmeans, scaler, new_data, features):
     X = new_data[features].copy()
     X = scaler.transform(X)
     new_data['cluster'] = kmeans.predict(X)
-    new_data['distance_to_centroid'] = np.min(kmeans.transform(X[features]), axis=1)
+    new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
     
     threshold = np.percentile(new_data['distance_to_centroid'], 95)
     new_data['k_anomaly'] = new_data['distance_to_centroid'] > threshold
