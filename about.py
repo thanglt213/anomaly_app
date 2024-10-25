@@ -1,9 +1,6 @@
 import streamlit as st
 
 def app():
-  # Tiêu đề
-  st.title("Ứng Dụng Máy Học Trong Phát Hiện Gian Lận Bảo Hiểm")
-  
   # Nội dung
   st.write("""
   Gian lận trong bảo hiểm là một vấn đề nghiêm trọng ảnh hưởng đến cả các công ty bảo hiểm và người tiêu dùng. 
