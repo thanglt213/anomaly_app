@@ -89,15 +89,21 @@ def load_isolation_forest_model():
 
 # Prediction Functions
 def predict_with_kmeans_model(kmeans, scaler, new_data, features):
+    # Extract and prepare features for transformation
     X = new_data[features].copy()
+    # Ensure DataFrame structure and column consistency
+    X = pd.DataFrame(X, columns=scaler.feature_names_in_)
+    
+    # Transform and predict clusters
     X = scaler.transform(X)
     new_data['cluster'] = kmeans.predict(X)
     new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
     
+    # Determine anomaly threshold
     threshold = np.percentile(new_data['distance_to_centroid'], 95)
     new_data['k_anomaly'] = new_data['distance_to_centroid'] > threshold
     return new_data
-
+    
 def predict_with_isolation_forest_model(model, predict_encoded):
     predictions = model.predict(predict_encoded)
     return predictions
