@@ -14,6 +14,9 @@ with st.sidebar:
         default_index=0,
     )
 
+st.title("Một ứng dụng AI: Phát hiện bất thường trong hoạt động bảo hiểm")
+st.info("\nBất thường không có nghĩa là gian lận, nhưng gian lận là bất thường!\n", icon="ℹ️")
+    
 # Gọi app tương ứng theo lựa chọn của người dùng
 if selected == "Home":
     home.app()
