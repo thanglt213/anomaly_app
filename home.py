@@ -176,8 +176,7 @@ def ke_toan_option():
                                    data=predicted_data.to_csv(index=False).encode('utf-8'), 
                                    file_name='kmeans_prediction_results.csv', 
                                    mime='text/csv')
-
-
+        
 def suc_khoe_option():
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
         train_file = st.file_uploader("Chọn file CSV huấn luyện Isolation Forest", type=["csv"], key='train_isolation_forest')
@@ -208,11 +207,28 @@ def suc_khoe_option():
         predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
         st.dataframe(predict_data)
 
+        # Hiển thị kết quả dự đoán
+        st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
+        st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
+        
+        # Tải kết quả dự đoán
         if st.button("Lưu kết quả dự đoán ra CSV"):
             st.download_button("Tải CSV kết quả dự đoán", 
                                data=predict_data.to_csv(index=False).encode('utf-8'), 
                                file_name='isolation_forest_predictions.csv', 
                                mime='text/csv')
+        
+        with st.expander("Trực quan hóa kết quả...", expanded=True):
+            # Biểu đồ
+            plot_prediction_chart(predict_data, 'distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác', key='key1')
+            plot_prediction_percent_chart(predict_data, 'distribution_channel', 'Tỷ lệ % bất thường theo kênh khai thác:', 'Kênh khai thác', key='key2')
+              
+            plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 'Chi nhánh', key='key3')
+            plot_prediction_percent_chart(predict_data, 'branch', 'Tỷ lệ % bất thường theo chi nhánh:', 'Chi nhánh', key='key4')
+                
+            plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện', key='key5')
+            plot_prediction_percent_chart(predict_data, 'hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện', key='key6')
+
 
 # Main Application
 def app():
