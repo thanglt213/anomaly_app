@@ -10,7 +10,7 @@ def app():
   
   Để giải quyết vấn đề này, nhiều công ty bảo hiểm đã áp dụng các giải pháp công nghệ tiên tiến như phân tích dữ liệu lớn (big data analytics) 
   và trí tuệ nhân tạo (AI) để phát hiện các mẫu hành vi gian lận. Việc triển khai hệ thống cảnh báo sớm và xác minh thông tin trực tuyến 
-  cũng giúp giảm thiểu rủi ro gian lận.Ứng dụng máy học trong việc phát hiện gian lận bảo hiểm đang ngày càng trở nên phổ biến và hiệu quả. 
+  cũng giúp giảm thiểu rủi ro gian lận. Ứng dụng máy học trong việc phát hiện gian lận bảo hiểm đang ngày càng trở nên phổ biến và hiệu quả. 
   Bằng cách sử dụng các thuật toán máy học, các công ty bảo hiểm có thể phân tích và xử lý một lượng lớn dữ liệu 
   để phát hiện các mẫu hành vi bất thường có thể chỉ ra gian lận.
   """)
