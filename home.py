@@ -14,7 +14,7 @@ from streamlit_option_menu import option_menu
 # Constants
 KMEANS_MODEL_FILE = "kmeans_model.pkl"
 ISOLATION_FOREST_MODEL_FILE = 'isolation_forest_model.pkl'
-KMEANS_NUMERIC_FEATURES = ['credit_account', 'debit_account', 'so_tien_chi_tiet', 'id_loai_giao_dich']
+KMEANS_NUMERIC_FEATURES = ['so_but_toan','credit_account', 'debit_account', 'so_tien_chi_tiet', 'id_loai_giao_dich']
 ISOLATION_NUMERIC_FEATURES = ['days_to_report', 'requested_amount_per_day']
 
 # Image Handling Functions
