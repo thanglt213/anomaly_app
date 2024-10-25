@@ -146,17 +146,6 @@ def ke_toan_option():
             if st.button("Huấn luyện và lưu mô hình"):
                 train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
                 st.success("Mô hình đã được huấn luyện và lưu.")
-                # Sau khi huấn luyện, yêu cầu tải file dự đoán
-                new_file = st.file_uploader("Tải file CSV để dự đoán", type=['csv'])
-                if new_file:
-                    new_data = pd.read_csv(new_file)
-                    st.dataframe(new_data.head())
-                    predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
-                    st.dataframe(predicted_data.head())
-                    st.download_button("Tải CSV kết quả dự đoán", 
-                                           data=predicted_data.to_csv(index=False).encode('utf-8'), 
-                                           file_name='kmeans_prediction_results.csv', 
-                                           mime='text/csv')
     else:
         # Nếu mô hình đã tồn tại, load mô hình
         st.success("Mô hình đã tồn tại.")
