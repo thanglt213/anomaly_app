@@ -127,7 +127,7 @@ def predict_with_model(kmeans, scaler, new_data, features):
 
 # Chức năng chính của mục 'Kế toán'
 def ke_toan_option():
-    st.title("Phân cụm KMeans và phát hiện bất thường")
+    #st.title("Phân cụm KMeans và phát hiện bất thường")
 
     # Kiểm tra xem mô hình đã được lưu trước đó chưa
     if not os.path.exists(MODEL_FILE):
