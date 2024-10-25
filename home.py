@@ -89,12 +89,13 @@ def load_isolation_forest_model():
 
 # Prediction Functions
 def predict_with_kmeans_model(kmeans, scaler, new_data, features):
-    new_data[features] = scaler.transform(new_data[features])
-    new_data['cluster'] = kmeans.predict(new_data[features])
-    new_data['distance_to_centroid'] = np.min(kmeans.transform(new_data[features]), axis=1)
+    X = new_data.copy()
+    X[features] = scaler.transform(X[features])
+    new_data['cluster'] = kmeans.predict(X[features])
+    new_data['distance_to_centroid'] = np.min(kmeans.transform(X[features]), axis=1)
     
-    threshold = np.percentile(new_data['distance_to_centroid'], 95)
-    new_data['k_anomaly'] = new_data['distance_to_centroid'] > threshold
+    threshold = np.percentile(X['distance_to_centroid'], 95)
+    new_data['k_anomaly'] = X['distance_to_centroid'] > threshold
     return new_data
 
 def predict_with_isolation_forest_model(model, predict_encoded):
