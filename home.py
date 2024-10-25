@@ -196,7 +196,7 @@ def suc_khoe_option():
 
 # Main Application
 def app():
-    selected_option = option_menu("Phát hiện bất thường", ['Kế toán', 'Sức khoẻ'], 
+    selected_option = option_menu(menu_title=None, options=['Kế toán', 'Sức khoẻ'], 
                                   icons=['currency-exchange', 'activity'], menu_icon="cast", 
                                   default_index=0, orientation="horizontal")
 
