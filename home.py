@@ -73,18 +73,18 @@ def train_and_save_kmeans_model(data, features, optimal_k=4):
     with open(KMEANS_MODEL_FILE, 'wb') as f:
         pickle.dump((kmeans, scaler), f)
 
-    st.success(f"Mô hình KMeans đã được huấn luyện và lưu vào {KMEANS_MODEL_FILE}.")
+    st.success(f"Mô hình đã được huấn luyện và lưu vào {KMEANS_MODEL_FILE}.")
 
 # Model Loading Functions
 def load_kmeans_model():
     with open(KMEANS_MODEL_FILE, 'rb') as f:
         kmeans, scaler = pickle.load(f)
-    st.success("Mô hình KMeans đã được tải thành công.")
+    st.success("Mô hình đã được tải thành công.")
     return kmeans, scaler
 
 def load_isolation_forest_model():
     model = joblib.load(ISOLATION_FOREST_MODEL_FILE)
-    st.success("Mô hình Isolation Forest đã được tải thành công.")
+    st.success("Mô hình đã được tải thành công.")
     return model
 
 # Prediction Functions
@@ -144,14 +144,13 @@ def ke_toan_option():
                     st.dataframe(new_data.head())
                     predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
                     st.dataframe(predicted_data.head())
-                    #if st.button("Lưu kết quả dự đoán KMeans ra CSV"):
                     st.download_button("Tải CSV kết quả dự đoán", 
                                            data=predicted_data.to_csv(index=False).encode('utf-8'), 
                                            file_name='kmeans_prediction_results.csv', 
                                            mime='text/csv')
     else:
         # Nếu mô hình đã tồn tại, load mô hình
-        st.success("Mô hình KMeans đã tồn tại.")
+        st.success("Mô hình đã tồn tại.")
         kmeans, scaler = load_kmeans_model()
 
         # Hiển thị nút để huấn luyện lại mô hình
@@ -171,7 +170,6 @@ def ke_toan_option():
             st.dataframe(new_data.head())
             predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
             st.dataframe(predicted_data.head())
-            #if st.button("Lưu kết quả dự đoán KMeans ra CSV"):
             st.download_button("Tải CSV kết quả dự đoán", 
                                 data=predicted_data.to_csv(index=False).encode('utf-8'), 
                                 file_name='kmeans_prediction_results.csv', 
