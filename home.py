@@ -197,7 +197,7 @@ def suc_khoe_option():
                                mime='text/csv')
 
 # Main Application
-def main():
+def app():
     selected_option = option_menu("Phát hiện bất thường", ['Kế toán', 'Sức khoẻ'], 
                                   icons=['currency-exchange', 'activity'], menu_icon="cast", 
                                   default_index=0, orientation="horizontal")
