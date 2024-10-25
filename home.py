@@ -64,6 +64,11 @@ def train_isolation_forest_model(train_data, contamination_rate=0.05):
     return model
 
 def train_and_save_kmeans_model(data, features, optimal_k=4):
+    # Kiểm tra nếu tệp mô hình tồn tại, xóa tệp trước khi huấn luyện lại
+    if os.path.exists(KMEANS_MODEL_FILE):
+        os.remove(KMEANS_MODEL_FILE)
+        st.info(f"Tệp mô hình {KMEANS_MODEL_FILE} đã được xóa.")
+
     scaler = StandardScaler()
     data[features] = scaler.fit_transform(data[features])
     
@@ -74,6 +79,7 @@ def train_and_save_kmeans_model(data, features, optimal_k=4):
         pickle.dump((kmeans, scaler), f)
 
     st.success(f"Mô hình đã được huấn luyện và lưu vào {KMEANS_MODEL_FILE}.")
+
 
 # Model Loading Functions
 def load_kmeans_model():
