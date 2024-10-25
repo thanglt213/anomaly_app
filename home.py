@@ -80,7 +80,7 @@ def train_and_save_kmeans_model(data, features, optimal_k=4):
 def load_kmeans_model():
     with open(KMEANS_MODEL_FILE, 'rb') as f:
         kmeans, scaler = pickle.load(f)
-    st.success("Mô hình đã được tải thành công.")
+    #st.success("Mô hình đã được tải thành công.")
     return kmeans, scaler
 
 def load_isolation_forest_model():
