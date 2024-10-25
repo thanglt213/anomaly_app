@@ -144,24 +144,19 @@ def ke_toan_option():
             st.dataframe(data.head())
             if st.button("Huấn luyện và lưu mô hình"):
                 train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
-                st.success("Mô hình đã được huấn luyện và lưu.")
     else:
         st.success("Mô hình đã tồn tại.")
-        
         # Huấn luyện lại mô hình nếu cần
         if st.button("Huấn luyện lại mô hình"):
             if os.path.exists(KMEANS_MODEL_FILE):
                 os.remove(KMEANS_MODEL_FILE)
-                st.info(f"Tệp mô hình {KMEANS_MODEL_FILE} đã được xóa.")
-
             retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
             if retrain_file is not None:
                 data = pd.read_csv(retrain_file)
                 st.dataframe(data.head())
                 if st.button("Huấn luyện lại và lưu mô hình"):
                     train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
-                    st.success("Mô hình đã được huấn luyện lại và lưu.")
-
+ 
     # Dự đoán chỉ thực hiện khi mô hình tồn tại
     if os.path.exists(KMEANS_MODEL_FILE):
         # Load mô hình
