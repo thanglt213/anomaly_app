@@ -141,9 +141,7 @@ def ke_toan_option():
         uploaded_file = st.file_uploader("Tải file CSV để huấn luyện mô hình", type=['csv'])
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file)
-            st.dataframe(data.head())
-            if st.button("Huấn luyện và lưu mô hình"):
-                train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
+            train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
     else:
         st.success("Mô hình đã tồn tại.")
         # Huấn luyện lại mô hình nếu cần
@@ -153,9 +151,7 @@ def ke_toan_option():
             retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
             if retrain_file is not None:
                 data = pd.read_csv(retrain_file)
-                st.dataframe(data.head())
-                if st.button("Huấn luyện lại và lưu mô hình"):
-                    train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
+                train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
  
     # Dự đoán chỉ thực hiện khi mô hình tồn tại
     if os.path.exists(KMEANS_MODEL_FILE):
