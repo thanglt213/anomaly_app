@@ -196,7 +196,7 @@ def suc_khoe_option():
 
 # Main Application
 def app():
-    selected_option = option_menu(menu_title=None, options=['Kế toán', 'Sức khoẻ'], 
+    selected_option = option_menu(menu_title=None, options=['Sức khoẻ','Xe cơ gới','Kế toán'], 
                                   icons=['currency-exchange', 'activity'], menu_icon="cast", 
                                   default_index=0, orientation="horizontal")
 
@@ -206,4 +206,4 @@ def app():
         suc_khoe_option()
 
 if __name__ == "__main__":
-    main()
+    app()
