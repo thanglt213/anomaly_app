@@ -134,18 +134,18 @@ def ke_toan_option():
         if uploaded_file:
             data = pd.read_csv(uploaded_file)
             st.dataframe(data.head())
-            if st.button("Huấn luyện và lưu mô hình KMeans"):
+            if st.button("Huấn luyện và lưu mô hình"):
                 train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
-                st.success("Mô hình KMeans đã được huấn luyện và lưu.")
+                st.success("Mô hình đã được huấn luyện và lưu.")
                 # Sau khi huấn luyện, yêu cầu tải file dự đoán
-                new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình KMeans", type=['csv'])
+                new_file = st.file_uploader("Tải file CSV để dự đoán", type=['csv'])
                 if new_file:
                     new_data = pd.read_csv(new_file)
                     st.dataframe(new_data.head())
                     predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
                     st.dataframe(predicted_data.head())
-                    if st.button("Lưu kết quả dự đoán KMeans ra CSV"):
-                        st.download_button("Tải CSV kết quả dự đoán", 
+                    #if st.button("Lưu kết quả dự đoán KMeans ra CSV"):
+                    st.download_button("Tải CSV kết quả dự đoán", 
                                            data=predicted_data.to_csv(index=False).encode('utf-8'), 
                                            file_name='kmeans_prediction_results.csv', 
                                            mime='text/csv')
@@ -160,22 +160,22 @@ def ke_toan_option():
             if retrain_file:
                 data = pd.read_csv(retrain_file)
                 st.dataframe(data.head())
-                if st.button("Huấn luyện lại và lưu mô hình KMeans"):
+                if st.button("Huấn luyện lại và lưu mô hình"):
                     train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
-                    st.success("Mô hình KMeans đã được huấn luyện lại và lưu.")
+                    st.success("Mô hình đã được huấn luyện lại và lưu.")
 
         # Tải file dự báo lên để thực hiện dự đoán
-        new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình KMeans", type=['csv'])
+        new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
         if new_file:
             new_data = pd.read_csv(new_file)
             st.dataframe(new_data.head())
             predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
             st.dataframe(predicted_data.head())
-            if st.button("Lưu kết quả dự đoán KMeans ra CSV"):
-                st.download_button("Tải CSV kết quả dự đoán", 
-                                   data=predicted_data.to_csv(index=False).encode('utf-8'), 
-                                   file_name='kmeans_prediction_results.csv', 
-                                   mime='text/csv')
+            #if st.button("Lưu kết quả dự đoán KMeans ra CSV"):
+            st.download_button("Tải CSV kết quả dự đoán", 
+                                data=predicted_data.to_csv(index=False).encode('utf-8'), 
+                                file_name='kmeans_prediction_results.csv', 
+                                mime='text/csv')
         
 def suc_khoe_option():
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
@@ -195,13 +195,13 @@ def suc_khoe_option():
         predict_encoded = combined_data.iloc[len(train_data):]
 
         if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
-            st.info("Mô hình Isolation Forest đã tồn tại. Dùng để dự đoán.")
+            st.info("Mô hình đã tồn tại. Dùng để dự đoán.")
             model = load_isolation_forest_model()
         else:
-            if st.button("Huấn luyện mô hình Isolation Forest"):
+            if st.button("Huấn luyện mô hình"):
                 model = train_isolation_forest_model(train_encoded)
                 joblib.dump(model, ISOLATION_FOREST_MODEL_FILE)
-                st.success(f"Mô hình Isolation Forest đã được lưu vào {ISOLATION_FOREST_MODEL_FILE}.")
+                st.success(f"Mô hình đã được lưu vào {ISOLATION_FOREST_MODEL_FILE}.")
 
         predictions = predict_with_isolation_forest_model(model, predict_encoded)
         predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
