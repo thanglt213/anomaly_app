@@ -161,18 +161,20 @@ def ke_toan_option():
                 if st.button("Huấn luyện lại và lưu mô hình"):
                     train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
                     st.success("Mô hình đã được huấn luyện lại và lưu.")
-                    
-    # Load mô hình
-    kmeans, scaler = load_kmeans_model()
+
+    # Dự đoán chỉ thực hiện khi mô hình tồn tại
+    if os.path.exists(KMEANS_MODEL_FILE):
+        # Load mô hình
+        kmeans, scaler = load_kmeans_model()
     
-    # Load file để dự đoán
-    new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
-    if new_file is not None:
-        new_data = pd.read_csv(new_file)
-        st.dataframe(new_data.head())
-        predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
-        st.dataframe(predicted_data.head())
-        st.download_button("Tải CSV kết quả dự đoán", 
+        # Load file để dự đoán
+        new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
+        if new_file is not None:
+            new_data = pd.read_csv(new_file)
+            st.dataframe(new_data.head())
+            predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
+            st.dataframe(predicted_data.head())
+            st.download_button("Tải CSV kết quả dự đoán", 
                             data=predicted_data.to_csv(index=False).encode('utf-8'), 
                             file_name='kmeans_prediction_results.csv', 
                             mime='text/csv')
