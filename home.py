@@ -154,7 +154,7 @@ def ke_toan_option():
         kmeans, scaler = load_kmeans_model()
 
         # Hiển thị nút để huấn luyện lại mô hình
-        if st.button("Huấn luyện lại mô hình KMeans"):
+        if st.button("Huấn luyện lại mô hình"):
             retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
             if retrain_file:
                 data = pd.read_csv(retrain_file)
@@ -177,15 +177,15 @@ def ke_toan_option():
         
 def suc_khoe_option():
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
-        train_file = st.file_uploader("Chọn file CSV huấn luyện Isolation Forest", type=["csv"], key='train_isolation_forest')
-        predict_file = st.file_uploader("Chọn file CSV dự đoán Isolation Forest", type=["csv"], key='predict_isolation_forest')
+        train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"], key='train_isolation_forest')
+        predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"], key='predict_isolation_forest')
 
     if train_file and predict_file:
         train_data = pd.read_csv(train_file).dropna().astype(str)
         predict_data = pd.read_csv(predict_file).dropna().astype(str)
 
         if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
-            st.error("Dữ liệu huấn luyện Isolation Forest thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
+            st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
             return
 
         combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
