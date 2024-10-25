@@ -64,11 +64,6 @@ def train_isolation_forest_model(train_data, contamination_rate=0.05):
     return model
 
 def train_and_save_kmeans_model(data, features, optimal_k=4):
-    # Kiểm tra nếu tệp mô hình tồn tại, xóa tệp trước khi huấn luyện lại
-    if os.path.exists(KMEANS_MODEL_FILE):
-        os.remove(KMEANS_MODEL_FILE)
-        st.info(f"Tệp mô hình {KMEANS_MODEL_FILE} đã được xóa.")
-
     scaler = StandardScaler()
     data[features] = scaler.fit_transform(data[features])
     
@@ -168,6 +163,11 @@ def ke_toan_option():
 
         # Hiển thị nút để huấn luyện lại mô hình
         if st.button("Huấn luyện lại mô hình"):
+            # Kiểm tra nếu tệp mô hình tồn tại, xóa tệp trước khi huấn luyện lại
+            if os.path.exists(KMEANS_MODEL_FILE):
+                os.remove(KMEANS_MODEL_FILE)
+                st.info(f"Tệp mô hình {KMEANS_MODEL_FILE} đã được xóa.")
+
             retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
             if retrain_file:
                 data = pd.read_csv(retrain_file)
