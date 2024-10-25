@@ -127,8 +127,6 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 
 # Streamlit Pages
 def ke_toan_option():
-    st.title("Phân cụm KMeans và phát hiện bất thường")
-
     if not os.path.exists(KMEANS_MODEL_FILE):
         st.info("Chưa có mô hình. Vui lòng tải dữ liệu để huấn luyện.")
         uploaded_file = st.file_uploader("Tải file CSV để huấn luyện mô hình", type=['csv'])
