@@ -169,6 +169,8 @@ def ke_toan_option():
                 if st.button("Huấn luyện lại và lưu mô hình"):
                     train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
                     st.success("Mô hình đã được huấn luyện lại và lưu.")
+            else:
+                st.write("Sao không huấn luyện lại mô hình được nhỉ?")
 
         # Tải file dự báo lên để thực hiện dự đoán
         new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
