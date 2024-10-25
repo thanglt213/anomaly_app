@@ -134,6 +134,7 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
     st.plotly_chart(fig, key=key)
 
 # Streamlit Pages
+# Modul kế toán
 def ke_toan_option():
     if not os.path.exists(KMEANS_MODEL_FILE):
         # Nếu mô hình chưa tồn tại, yêu cầu tải dữ liệu để huấn luyện
@@ -178,18 +179,19 @@ def ke_toan_option():
             else:
                 st.write("Sao không huấn luyện lại mô hình được nhỉ?")
 
-        # Tải file dự báo lên để thực hiện dự đoán
-        new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
-        if new_file:
-            new_data = pd.read_csv(new_file)
-            st.dataframe(new_data.head())
-            predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
-            st.dataframe(predicted_data.head())
-            st.download_button("Tải CSV kết quả dự đoán", 
-                                data=predicted_data.to_csv(index=False).encode('utf-8'), 
-                                file_name='kmeans_prediction_results.csv', 
-                                mime='text/csv')
+    # Tải file dự báo lên để thực hiện dự đoán
+    new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
+    if new_file:
+        new_data = pd.read_csv(new_file)
+        st.dataframe(new_data.head())
+        predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
+        st.dataframe(predicted_data.head())
+        st.download_button("Tải CSV kết quả dự đoán", 
+                            data=predicted_data.to_csv(index=False).encode('utf-8'), 
+                            file_name='kmeans_prediction_results.csv', 
+                            mime='text/csv')
         
+# Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"], key='train_isolation_forest')
