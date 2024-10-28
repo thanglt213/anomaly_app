@@ -206,17 +206,14 @@ def suc_khoe_option():
         plot_prediction_chart(preprocessed_predict_data, 'some_column', 'Kết quả dự đoán', 'Số lượng', 'isolation_foreast')
         plot_prediction_percent_chart(preprocessed_predict_data, 'some_column', 'Tỷ lệ phần trăm Bất thường', 'Số lượng', 'isolation_foreast_percent')
 
-# Sidebar Navigation
-with st.sidebar:
-    selected = option_menu("Menu",
-        ["Kế Toán", "Sức Khỏe"],
-        icons=['cash-coin', 'heart'],
-        menu_icon="cast",
-        default_index=0
-    )
-
-# Main app logic
-if selected == "Kế Toán":
-    ke_toan_option()
-elif selected == "Sức Khỏe":
-    suc_khoe_option()
+# Main Application
+def app():
+    selected_option = option_menu(menu_title=None, options=['Sức khoẻ','Xe cơ gới','Kế toán'], 
+                                  icons=['activity','car-front-fill','currency-exchange'], menu_icon="cast", 
+                                  default_index=0, orientation="horizontal")
+    if selected_option == 'Kế toán':
+        ke_toan_option()
+    elif selected_option == 'Sức khoẻ':
+        suc_khoe_option()
+if __name__ == "__main__":
+    app()
