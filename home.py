@@ -170,58 +170,94 @@ def ke_toan_option():
                             file_name='kmeans_prediction_results.csv', 
                             mime='text/csv')
         
+
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"], key='train_isolation_forest')
         predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"], key='predict_isolation_forest')
 
+    # Kiểm tra file dữ liệu và lưu vào session state
     if train_file and predict_file:
-        train_data = pd.read_csv(train_file).dropna().astype(str)
-        predict_data = pd.read_csv(predict_file).dropna().astype(str)
+        if 'train_data' not in st.session_state:
+            st.session_state.train_data = pd.read_csv(train_file).dropna().astype(str)
+        if 'predict_data' not in st.session_state:
+            st.session_state.predict_data = pd.read_csv(predict_file).dropna().astype(str)
+        
+        train_data = st.session_state.train_data
+        predict_data = st.session_state.predict_data
 
         if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
             st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
             return
 
-        combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
+        # Xử lý và lưu dữ liệu tiền xử lý vào session state
+        if 'combined_data' not in st.session_state:
+            combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
+            st.session_state.combined_data = combined_data
+            st.session_state.label_encoders = label_encoders
+
+        combined_data = st.session_state.combined_data
         train_encoded = combined_data.iloc[:len(train_data)]
         predict_encoded = combined_data.iloc[len(train_data):]
 
-        if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
-            st.info("Mô hình đã tồn tại. Dùng để dự đoán.")
-            model = load_isolation_forest_model()
-        else:
-            if st.button("Huấn luyện mô hình"):
-                model = train_isolation_forest_model(train_encoded)
-                joblib.dump(model, ISOLATION_FOREST_MODEL_FILE)
+        # Kiểm tra và tải mô hình từ session state hoặc từ file
+        if 'model' not in st.session_state:
+            if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
+                st.info("Mô hình đã tồn tại. Dùng để dự đoán.")
+                st.session_state.model = load_isolation_forest_model()
+            elif st.button("Huấn luyện mô hình"):
+                st.session_state.model = train_isolation_forest_model(train_encoded)
+                joblib.dump(st.session_state.model, ISOLATION_FOREST_MODEL_FILE)
                 st.success(f"Mô hình đã được lưu vào {ISOLATION_FOREST_MODEL_FILE}.")
 
-        predictions = predict_with_isolation_forest_model(model, predict_encoded)
-        predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
-        st.dataframe(predict_data)
+        model = st.session_state.get('model', None)
+        if model:
+            # Dự đoán và lưu kết quả vào session state
+            predictions = predict_with_isolation_forest_model(model, predict_encoded)
+            predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
+            st.session_state.predictions = predict_data
 
-        # Hiển thị kết quả dự đoán
-        st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
-        st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
-        
-        # Tải kết quả dự đoán
-        if st.button("Lưu kết quả dự đoán ra CSV"):
-            st.download_button("Tải CSV kết quả dự đoán", 
-                               data=predict_data.to_csv(index=False).encode('utf-8'), 
-                               file_name='isolation_forest_predictions.csv', 
-                               mime='text/csv')
-        
-        with st.expander("Trực quan hóa kết quả...", expanded=True):
-            # Biểu đồ
-            plot_prediction_chart(predict_data, 'distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác', key='key1')
-            plot_prediction_percent_chart(predict_data, 'distribution_channel', 'Tỷ lệ % bất thường theo kênh khai thác:', 'Kênh khai thác', key='key2')
-              
-            plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 'Chi nhánh', key='key3')
-            plot_prediction_percent_chart(predict_data, 'branch', 'Tỷ lệ % bất thường theo chi nhánh:', 'Chi nhánh', key='key4')
-                
-            plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện', key='key5')
-            plot_prediction_percent_chart(predict_data, 'hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện', key='key6')
+            # Hiển thị kết quả dự đoán
+            st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
+            st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
+            
+            # Tải kết quả dự đoán
+            if st.button("Lưu kết quả dự đoán ra CSV"):
+                st.download_button("Tải CSV kết quả dự đoán", 
+                                   data=predict_data.to_csv(index=False).encode('utf-8'), 
+                                   file_name='isolation_forest_predictions.csv', 
+                                   mime='text/csv')
+
+            with st.expander("Trực quan hóa kết quả...", expanded=True):
+                # Kiểm tra và lưu biểu đồ vào session state
+                if 'charts' not in st.session_state:
+                    st.session_state.charts = {
+                        'distribution_channel': plot_prediction_chart(predict_data, 'distribution_channel', 
+                                                                      'Số lượng bất thường theo kênh khai thác:', 
+                                                                      'Kênh khai thác', key='key1'),
+                        'distribution_channel_percent': plot_prediction_percent_chart(predict_data, 'distribution_channel', 
+                                                                                      'Tỷ lệ % bất thường theo kênh khai thác:', 
+                                                                                      'Kênh khai thác', key='key2'),
+                        'branch': plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 
+                                                        'Chi nhánh', key='key3'),
+                        'branch_percent': plot_prediction_percent_chart(predict_data, 'branch', 
+                                                                        'Tỷ lệ % bất thường theo chi nhánh:', 
+                                                                        'Chi nhánh', key='key4'),
+                        'hospital': plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 
+                                                          'Bệnh viện', key='key5'),
+                        'hospital_percent': plot_prediction_percent_chart(predict_data, 'hospital', 
+                                                                          'Tỷ lệ % bất thường theo bệnh viện:', 
+                                                                          'Bệnh viện', key='key6')
+                    }
+                # Hiển thị các biểu đồ
+                st.session_state.charts['distribution_channel']
+                st.session_state.charts['distribution_channel_percent']
+                st.session_state.charts['branch']
+                st.session_state.charts['branch_percent']
+                st.session_state.charts['hospital']
+                st.session_state.charts['hospital_percent']
+
 
 
 # Main Application
