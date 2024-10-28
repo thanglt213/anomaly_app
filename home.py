@@ -259,13 +259,14 @@ def suc_khoe_option():
                                                                   'Bệnh viện', key='key6')
             }
 
-        # Hiển thị các biểu đồ từ session_state
-        st.session_state.charts['distribution_channel']
-        st.session_state.charts['distribution_channel_percent']
-        st.session_state.charts['branch']
-        st.session_state.charts['branch_percent']
-        st.session_state.charts['hospital']
-        st.session_state.charts['hospital_percent']
+        # Hiển thị biểu đồ từ session_state nếu đã có
+        if 'charts' in st.session_state:
+            st.session_state.charts['distribution_channel']
+            st.session_state.charts['distribution_channel_percent']
+            st.session_state.charts['branch']
+            st.session_state.charts['branch_percent']
+            st.session_state.charts['hospital']
+            st.session_state.charts['hospital_percent']
 
 
 # Main Application
