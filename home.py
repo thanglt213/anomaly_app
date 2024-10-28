@@ -236,35 +236,36 @@ def suc_khoe_option():
                                    file_name='isolation_forest_predictions.csv', 
                                    mime='text/csv')
 
-            with st.expander("Trực quan hóa kết quả...", expanded=True):
-                # Lưu các biểu đồ vào session_state nếu chưa có
-                if 'charts' not in st.session_state:
-                    st.session_state.charts = {
-                        'distribution_channel': plot_prediction_chart(predict_data, 'distribution_channel', 
-                                                                      'Số lượng bất thường theo kênh khai thác:', 
-                                                                      'Kênh khai thác', key='key1'),
-                        'distribution_channel_percent': plot_prediction_percent_chart(predict_data, 'distribution_channel', 
-                                                                                      'Tỷ lệ % bất thường theo kênh khai thác:', 
-                                                                                      'Kênh khai thác', key='key2'),
-                        'branch': plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 
-                                                        'Chi nhánh', key='key3'),
-                        'branch_percent': plot_prediction_percent_chart(predict_data, 'branch', 
-                                                                        'Tỷ lệ % bất thường theo chi nhánh:', 
-                                                                        'Chi nhánh', key='key4'),
-                        'hospital': plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 
-                                                          'Bệnh viện', key='key5'),
-                        'hospital_percent': plot_prediction_percent_chart(predict_data, 'hospital', 
-                                                                          'Tỷ lệ % bất thường theo bệnh viện:', 
-                                                                          'Bệnh viện', key='key6')
-                    }
+    # Trực quan hóa kết quả
+    with st.expander("Trực quan hóa kết quả...", expanded=True):
+        # Lưu các biểu đồ vào session_state nếu chưa có
+        if 'charts' not in st.session_state:
+            st.session_state.charts = {
+                'distribution_channel': plot_prediction_chart(predict_data, 'distribution_channel', 
+                                                              'Số lượng bất thường theo kênh khai thác:', 
+                                                              'Kênh khai thác', key='key1'),
+                'distribution_channel_percent': plot_prediction_percent_chart(predict_data, 'distribution_channel', 
+                                                                              'Tỷ lệ % bất thường theo kênh khai thác:', 
+                                                                              'Kênh khai thác', key='key2'),
+                'branch': plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 
+                                                'Chi nhánh', key='key3'),
+                'branch_percent': plot_prediction_percent_chart(predict_data, 'branch', 
+                                                                'Tỷ lệ % bất thường theo chi nhánh:', 
+                                                                'Chi nhánh', key='key4'),
+                'hospital': plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 
+                                                  'Bệnh viện', key='key5'),
+                'hospital_percent': plot_prediction_percent_chart(predict_data, 'hospital', 
+                                                                  'Tỷ lệ % bất thường theo bệnh viện:', 
+                                                                  'Bệnh viện', key='key6')
+            }
 
-                # Hiển thị các biểu đồ từ session_state
-                st.session_state.charts['distribution_channel']
-                st.session_state.charts['distribution_channel_percent']
-                st.session_state.charts['branch']
-                st.session_state.charts['branch_percent']
-                st.session_state.charts['hospital']
-                st.session_state.charts['hospital_percent']
+        # Hiển thị các biểu đồ từ session_state
+        st.session_state.charts['distribution_channel']
+        st.session_state.charts['distribution_channel_percent']
+        st.session_state.charts['branch']
+        st.session_state.charts['branch_percent']
+        st.session_state.charts['hospital']
+        st.session_state.charts['hospital_percent']
 
 
 # Main Application
