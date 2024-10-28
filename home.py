@@ -22,6 +22,12 @@ if 'kmeans_model' not in st.session_state:
     st.session_state.kmeans_model = None
 if 'isolation_forest_model' not in st.session_state:
     st.session_state.isolation_forest_model = None
+if 'train_data_kmeans' not in st.session_state:
+    st.session_state.train_data_kmeans = None
+if 'train_data_isolation' not in st.session_state:
+    st.session_state.train_data_isolation = None
+if 'predict_data_isolation' not in st.session_state:
+    st.session_state.predict_data_isolation = None
 
 # Image Handling Functions
 def display_resized_image(image_path, new_height_divider=2):
@@ -71,6 +77,7 @@ def train_and_save_kmeans_model(data, features, optimal_k=4):
     kmeans = KMeans(n_clusters=optimal_k, init='k-means++', random_state=42)
     kmeans.fit(data[features])
     st.session_state.kmeans_model = (kmeans, scaler)
+    st.session_state.train_data_kmeans = data  # Store train data in session state
     
     with open(KMEANS_MODEL_FILE, 'wb') as f:
         pickle.dump((kmeans, scaler), f)
@@ -81,6 +88,7 @@ def train_isolation_forest_model(train_data, contamination_rate=0.05):
     model = IsolationForest(n_estimators=100, contamination=contamination_rate, random_state=42)
     model.fit(train_data.select_dtypes(include=[np.number]))
     st.session_state.isolation_forest_model = model
+    st.session_state.train_data_isolation = train_data  # Store train data in session state
     return model
 
 # Model Loading Functions
@@ -173,32 +181,42 @@ def suc_khoe_option():
         train_data = pd.read_csv(train_file).dropna().astype(str)
         predict_data = pd.read_csv(predict_file).dropna().astype(str)
 
-        if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
-            st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
-            return
+        st.session_state.train_data_isolation = train_data
+        st.session_state.predict_data_isolation = predict_data
 
-        combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
-        train_encoded = combined_data.iloc[:len(train_data)]
-        predict_encoded = combined_data.iloc[len(train_data):]
+        st.write("Dữ liệu huấn luyện:")
+        st.dataframe(train_data)
 
-        if load_isolation_forest_model():
-            st.info("Mô hình đã tồn tại.")
-            isolation_model = load_isolation_forest_model()
-        else:
-            isolation_model = train_isolation_forest_model(train_encoded)
-            joblib.dump(isolation_model, ISOLATION_FOREST_MODEL_FILE)
+        st.write("Dữ liệu dự đoán:")
+        st.dataframe(predict_data)
 
-        predictions = predict_with_isolation_forest_model(isolation_model, predict_encoded)
-        predict_data['Prediction'] = predictions
+        # Preprocess and train the model
+        preprocessed_train_data, _ = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
+        model = train_isolation_forest_model(preprocessed_train_data)
 
-        plot_prediction_chart(predict_data, 'branch_id', "Biểu đồ tổng số giao dịch", "Tổng số giao dịch", key="bar_chart_total_transactions")
-        plot_prediction_percent_chart(predict_data, 'branch_id', "Biểu đồ tỷ lệ giao dịch bất thường", "Mã chi nhánh", key="bar_chart_anomaly_percentage")
+        # Preprocess predict data
+        preprocessed_predict_data, _ = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
+        predictions = predict_with_isolation_forest_model(model, preprocessed_predict_data)
+        preprocessed_predict_data['Prediction'] = predictions
+        
+        st.write("Kết quả dự đoán:")
+        st.dataframe(preprocessed_predict_data)
 
-# Main
+        # Plotting the predictions
+        plot_prediction_chart(preprocessed_predict_data, 'some_column', 'Kết quả dự đoán', 'Số lượng', 'isolation_foreast')
+        plot_prediction_percent_chart(preprocessed_predict_data, 'some_column', 'Tỷ lệ phần trăm Bất thường', 'Số lượng', 'isolation_foreast_percent')
+
+# Sidebar Navigation
 with st.sidebar:
-    options = option_menu("Chọn chức năng", ["Kế toán", "Sức khỏe"], icons=["file-earmark-spreadsheet", "heart-pulse"], menu_icon="app-indicator", default_index=0)
+    selected = option_menu("Menu",
+        ["Kế Toán", "Sức Khỏe"],
+        icons=['cash-coin', 'heart'],
+        menu_icon="cast",
+        default_index=0
+    )
 
-if options == "Kế toán":
+# Main app logic
+if selected == "Kế Toán":
     ke_toan_option()
-elif options == "Sức khỏe":
+elif selected == "Sức Khỏe":
     suc_khoe_option()
