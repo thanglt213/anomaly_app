@@ -201,16 +201,21 @@ def suc_khoe_option():
 # Main Streamlit App
 def app():
     st.title("Phát hiện bất thường trong dữ liệu tài chính và bảo hiểm sức khỏe")
-    
-    with st.sidebar:
-        selected_option = option_menu("Menu", ["Kế Toán", "Sức Khỏe"], 
-                                       icons=["file-earmark-text", "person-heart"], 
-                                       menu_icon="cast", default_index=0)
-    
+
+    # Tạo menu với dạng nút ngang
+    selected_option = option_menu(
+        menu_title=None,
+        options=["Kế Toán", "Sức Khỏe"],
+        icons=["calculator", "heart"],
+        orientation="horizontal"
+    )
+
+    # Xử lý lựa chọn
     if selected_option == "Kế Toán":
         ke_toan_option()
     elif selected_option == "Sức Khỏe":
         suc_khoe_option()
+
 
 if __name__ == "__main__":
     app()
