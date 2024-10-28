@@ -172,27 +172,40 @@ def ke_toan_option():
         
 
 # Modul bảo hiểm sức khỏe        
+import streamlit as st
+import pandas as pd
+import numpy as np
+import os
+import joblib
+
+# Giả định bạn có các hàm cần thiết
+# preprocess_isolation_forest_data, load_isolation_forest_model, train_isolation_forest_model,
+# predict_with_isolation_forest_model, plot_prediction_chart, plot_prediction_percent_chart
+
+ISOLATION_FOREST_MODEL_FILE = 'isolation_forest_model.joblib'
+ISOLATION_NUMERIC_FEATURES = ['days_to_report', 'requested_amount_per_day']
+
 def suc_khoe_option():
-    # Load data nếu đã có trong session_state
-    if 'train_data' in st.session_state:
-        train_data = st.session_state.train_data
-    if 'predict_data' in st.session_state:
-        predict_data = st.session_state.predict_data
-    if 'model' in st.session_state:
-        model = st.session_state.model
+    # Khởi tạo train_data và predict_data mặc định là None
+    train_data = st.session_state.get('train_data', None)
+    predict_data = st.session_state.get('predict_data', None)
+    model = st.session_state.get('model', None)
 
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
         # Tải lên file dữ liệu và lưu vào session state
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"], key='train_isolation_forest')
         predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"], key='predict_isolation_forest')
 
-        if train_file and predict_file and 'train_data' not in st.session_state:
-            train_data = pd.read_csv(train_file).dropna().astype(str)
-            predict_data = pd.read_csv(predict_file).dropna().astype(str)
-            st.session_state.train_data = train_data
-            st.session_state.predict_data = predict_data
+        # Kiểm tra nếu file đã được tải lên
+        if train_file and predict_file:
+            if 'train_data' not in st.session_state:
+                train_data = pd.read_csv(train_file).dropna().astype(str)
+                st.session_state.train_data = train_data
+            if 'predict_data' not in st.session_state:
+                predict_data = pd.read_csv(predict_file).dropna().astype(str)
+                st.session_state.predict_data = predict_data
 
-        # Kiểm tra cột dữ liệu
+        # Kiểm tra nếu dữ liệu đã được tải và có cột cần thiết
         if train_data is not None and predict_data is not None:
             if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
                 st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
@@ -265,6 +278,7 @@ def suc_khoe_option():
                 st.session_state.charts['branch_percent']
                 st.session_state.charts['hospital']
                 st.session_state.charts['hospital_percent']
+
 
 
 # Main Application
