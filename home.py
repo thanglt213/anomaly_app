@@ -134,8 +134,9 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
     st.plotly_chart(fig, key=key)
 
 # Streamlit Pages
+# Modul Kế toán
 def ke_toan_option():
-    # Kiểm tra trạng thái của session
+    # Khởi tạo session_state nếu chưa tồn tại
     if 'kmeans_model' not in st.session_state:
         st.session_state['kmeans_model'] = None
     if 'scaler' not in st.session_state:
@@ -144,6 +145,8 @@ def ke_toan_option():
         st.session_state['predicted_data'] = None
     if 'train_data' not in st.session_state:
         st.session_state['train_data'] = None
+    if 'new_data' not in st.session_state:
+        st.session_state['new_data'] = None
 
     # Kiểm tra mô hình có tồn tại hay không
     if not os.path.exists(KMEANS_MODEL_FILE):
@@ -167,7 +170,7 @@ def ke_toan_option():
     
     # Dự đoán chỉ thực hiện khi mô hình tồn tại
     if os.path.exists(KMEANS_MODEL_FILE):
-        # Load mô hình
+        # Load mô hình vào session_state nếu chưa có
         if st.session_state['kmeans_model'] is None or st.session_state['scaler'] is None:
             kmeans, scaler = load_kmeans_model()
             st.session_state['kmeans_model'] = kmeans
@@ -176,23 +179,30 @@ def ke_toan_option():
             kmeans = st.session_state['kmeans_model']
             scaler = st.session_state['scaler']
     
-        # Load file để dự đoán
+        # Tải file dự đoán
         new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
         if new_file is not None:
             new_data = pd.read_csv(new_file)
+            st.session_state['new_data'] = new_data
             st.dataframe(new_data.head())
             predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
             st.session_state['predicted_data'] = predicted_data
             st.dataframe(predicted_data.head())
-            st.download_button("Tải CSV kết quả dự đoán", 
-                            data=predicted_data.to_csv(index=False).encode('utf-8'), 
-                            file_name='kmeans_prediction_results.csv', 
-                            mime='text/csv')
 
-    # Kiểm tra và hiển thị dữ liệu dự đoán đã lưu trong session_state
+    # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
     if st.session_state['predicted_data'] is not None:
         st.write("Dữ liệu dự đoán hiện tại:")
         st.dataframe(st.session_state['predicted_data'])
+        st.download_button("Tải CSV kết quả dự đoán", 
+                           data=st.session_state['predicted_data'].to_csv(index=False).encode('utf-8'), 
+                           file_name='kmeans_prediction_results.csv', 
+                           mime='text/csv')
+
+    # Hiển thị dữ liệu huấn luyện nếu đã được tải lên
+    if st.session_state['train_data'] is not None:
+        st.write("Dữ liệu huấn luyện đã tải lên:")
+        st.dataframe(st.session_state['train_data'].head())
+
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
