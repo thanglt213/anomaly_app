@@ -202,9 +202,28 @@ def suc_khoe_option():
         st.write("Kết quả dự đoán:")
         st.dataframe(preprocessed_predict_data)
 
-        # Plotting the predictions
-        plot_prediction_chart(preprocessed_predict_data, 'some_column', 'Kết quả dự đoán', 'Số lượng', 'isolation_foreast')
-        plot_prediction_percent_chart(preprocessed_predict_data, 'some_column', 'Tỷ lệ phần trăm Bất thường', 'Số lượng', 'isolation_foreast_percent')
+        # Hiển thị kết quả dự đoán
+        st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
+        st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
+        
+        # Tải kết quả dự đoán
+        if st.button("Lưu kết quả dự đoán ra CSV"):
+            st.download_button("Tải CSV kết quả dự đoán", 
+                               data=predict_data.to_csv(index=False).encode('utf-8'), 
+                               file_name='isolation_forest_predictions.csv', 
+                               mime='text/csv')
+        
+        with st.expander("Trực quan hóa kết quả...", expanded=True):
+            # Biểu đồ
+            plot_prediction_chart(predict_data, 'distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác', key='key1')
+            plot_prediction_percent_chart(predict_data, 'distribution_channel', 'Tỷ lệ % bất thường theo kênh khai thác:', 'Kênh khai thác', key='key2')
+              
+            plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 'Chi nhánh', key='key3')
+            plot_prediction_percent_chart(predict_data, 'branch', 'Tỷ lệ % bất thường theo chi nhánh:', 'Chi nhánh', key='key4')
+                
+            plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện', key='key5')
+            plot_prediction_percent_chart(predict_data, 'hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện', key='key6')
+
 
 # Main Application
 def app():
