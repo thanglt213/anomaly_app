@@ -197,12 +197,12 @@ def ke_toan_option():
                            data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
                            file_name='kmeans_prediction_results.csv', 
                            mime='text/csv')
-
+    '''
     # Hiển thị dữ liệu huấn luyện nếu đã được tải lên
     if st.session_state['kt_train_data'] is not None:
         st.write("Dữ liệu huấn luyện đã tải lên:")
         st.dataframe(st.session_state['kt_train_data'].head())
-
+    '''
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
     # Khởi tạo các dữ liệu cần thiết nếu chưa có trong session state
