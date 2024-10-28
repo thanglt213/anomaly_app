@@ -207,10 +207,10 @@ def suc_khoe_option():
         st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
         
         # Tải kết quả dự đoán
-        if st.download_button("Tải CSV kết quả dự đoán", 
-                               data=predict_data.to_csv(index=False).encode('utf-8'), 
-                               file_name='isolation_forest_predictions.csv', 
-                               mime='text/csv')
+        st.download_button("Tải CSV kết quả dự đoán", 
+                            data=predict_data.to_csv(index=False).encode('utf-8'), 
+                            file_name='isolation_forest_predictions.csv', 
+                            mime='text/csv')
         
         with st.expander("Trực quan hóa kết quả...", expanded=True):
         # Biểu đồ
