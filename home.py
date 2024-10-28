@@ -205,13 +205,14 @@ def suc_khoe_option():
         # Hiển thị kết quả dự đoán
         st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
         st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
-        
+
+        '''
         # Tải kết quả dự đoán
         st.download_button("Tải CSV kết quả dự đoán", 
                             data=predict_data.to_csv(index=False).encode('utf-8'), 
                             file_name='isolation_forest_predictions.csv', 
                             mime='text/csv')
-        
+        '''
         with st.expander("Trực quan hóa kết quả...", expanded=True):
         # Biểu đồ
         plot_prediction_chart(predict_data, 'distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác', key='key1')
