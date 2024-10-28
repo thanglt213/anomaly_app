@@ -188,7 +188,12 @@ def ke_toan_option():
             predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
             st.session_state['predicted_data'] = predicted_data
             st.dataframe(predicted_data.head())
-
+            
+    # Hiển thị dữ liệu huấn luyện nếu đã được tải lên
+    if st.session_state['train_data'] is not None:
+        st.write("Dữ liệu huấn luyện đã tải lên:")
+        st.dataframe(st.session_state['train_data'].head())
+    
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
     if st.session_state['predicted_data'] is not None:
         st.write("Dữ liệu dự đoán hiện tại:")
@@ -197,12 +202,6 @@ def ke_toan_option():
                            data=st.session_state['predicted_data'].to_csv(index=False).encode('utf-8'), 
                            file_name='kmeans_prediction_results.csv', 
                            mime='text/csv')
-
-    # Hiển thị dữ liệu huấn luyện nếu đã được tải lên
-    if st.session_state['train_data'] is not None:
-        st.write("Dữ liệu huấn luyện đã tải lên:")
-        st.dataframe(st.session_state['train_data'].head())
-
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
