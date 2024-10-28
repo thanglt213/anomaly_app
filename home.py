@@ -14,20 +14,8 @@ from streamlit_option_menu import option_menu
 # Constants
 KMEANS_MODEL_FILE = "kmeans_model.pkl"
 ISOLATION_FOREST_MODEL_FILE = 'isolation_forest_model.pkl'
-KMEANS_NUMERIC_FEATURES = ['so_but_toan','credit_account', 'debit_account', 'so_tien_chi_tiet', 'id_loai_giao_dich']
+KMEANS_NUMERIC_FEATURES = ['so_but_toan', 'credit_account', 'debit_account', 'so_tien_chi_tiet', 'id_loai_giao_dich']
 ISOLATION_NUMERIC_FEATURES = ['days_to_report', 'requested_amount_per_day']
-
-# Initialize session state for models and data
-if 'kmeans_model' not in st.session_state:
-    st.session_state.kmeans_model = None
-if 'isolation_forest_model' not in st.session_state:
-    st.session_state.isolation_forest_model = None
-if 'train_data_kmeans' not in st.session_state:
-    st.session_state.train_data_kmeans = None
-if 'train_data_isolation' not in st.session_state:
-    st.session_state.train_data_isolation = None
-if 'predict_data_isolation' not in st.session_state:
-    st.session_state.predict_data_isolation = None
 
 # Image Handling Functions
 def display_resized_image(image_path, new_height_divider=2):
@@ -69,51 +57,48 @@ def preprocess_isolation_forest_data(train_data, predict_data, numeric_cols):
     
     return combined_data, label_encoders
 
-# Model Training and Saving Functions
+# Model Training Functions
+def train_isolation_forest_model(train_data, contamination_rate=0.05):
+    model = IsolationForest(n_estimators=100, contamination=contamination_rate, random_state=42)
+    model.fit(train_data.select_dtypes(include=[np.number]))
+    return model
+
 def train_and_save_kmeans_model(data, features, optimal_k=4):
     scaler = StandardScaler()
     data[features] = scaler.fit_transform(data[features])
     
     kmeans = KMeans(n_clusters=optimal_k, init='k-means++', random_state=42)
     kmeans.fit(data[features])
-    st.session_state.kmeans_model = (kmeans, scaler)
-    st.session_state.train_data_kmeans = data  # Store train data in session state
-    
+
     with open(KMEANS_MODEL_FILE, 'wb') as f:
         pickle.dump((kmeans, scaler), f)
 
     st.success(f"Mô hình đã được huấn luyện và lưu vào {KMEANS_MODEL_FILE}.")
 
-def train_isolation_forest_model(train_data, contamination_rate=0.05):
-    model = IsolationForest(n_estimators=100, contamination=contamination_rate, random_state=42)
-    model.fit(train_data.select_dtypes(include=[np.number]))
-    st.session_state.isolation_forest_model = model
-    st.session_state.train_data_isolation = train_data  # Store train data in session state
-    return model
-
 # Model Loading Functions
 def load_kmeans_model():
-    if st.session_state.kmeans_model is None and os.path.exists(KMEANS_MODEL_FILE):
-        with open(KMEANS_MODEL_FILE, 'rb') as f:
-            st.session_state.kmeans_model = pickle.load(f)
-    return st.session_state.kmeans_model
+    with open(KMEANS_MODEL_FILE, 'rb') as f:
+        kmeans, scaler = pickle.load(f)
+    return kmeans, scaler
 
 def load_isolation_forest_model():
-    if st.session_state.isolation_forest_model is None and os.path.exists(ISOLATION_FOREST_MODEL_FILE):
-        st.session_state.isolation_forest_model = joblib.load(ISOLATION_FOREST_MODEL_FILE)
-    return st.session_state.isolation_forest_model
+    model = joblib.load(ISOLATION_FOREST_MODEL_FILE)
+    st.success("Mô hình đã được tải thành công.")
+    return model
 
 # Prediction Functions
 def predict_with_kmeans_model(kmeans, scaler, new_data, features):
     X = new_data[features].copy()
     X = pd.DataFrame(X, columns=scaler.feature_names_in_)
+    
     X = scaler.transform(X)
     new_data['cluster'] = kmeans.predict(X)
     new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
+    
     threshold = np.percentile(new_data['distance_to_centroid'], 95)
     new_data['k_anomaly'] = new_data['distance_to_centroid'] > threshold
     return new_data
-
+    
 def predict_with_isolation_forest_model(model, predict_encoded):
     predictions = model.predict(predict_encoded)
     return predictions
@@ -144,7 +129,7 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 
 # Streamlit Pages
 def ke_toan_option():
-    if not load_kmeans_model():
+    if not os.path.exists(KMEANS_MODEL_FILE):
         st.info("Chưa có mô hình. Vui lòng tải dữ liệu để huấn luyện.")
         uploaded_file = st.file_uploader("Tải file CSV để huấn luyện mô hình", type=['csv'])
         if uploaded_file is not None:
@@ -153,14 +138,16 @@ def ke_toan_option():
     else:
         st.success("Mô hình đã tồn tại.")
         if st.button("Huấn luyện lại mô hình"):
-            os.remove(KMEANS_MODEL_FILE)
+            if os.path.exists(KMEANS_MODEL_FILE):
+                os.remove(KMEANS_MODEL_FILE)
             retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
             if retrain_file is not None:
                 data = pd.read_csv(retrain_file)
                 train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
  
-    if load_kmeans_model():
+    if os.path.exists(KMEANS_MODEL_FILE):
         kmeans, scaler = load_kmeans_model()
+    
         new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
         if new_file is not None:
             new_data = pd.read_csv(new_file)
@@ -172,6 +159,7 @@ def ke_toan_option():
                             file_name='kmeans_prediction_results.csv', 
                             mime='text/csv')
         
+# Module for Health Insurance        
 def suc_khoe_option():
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"], key='train_isolation_forest')
@@ -181,58 +169,48 @@ def suc_khoe_option():
         train_data = pd.read_csv(train_file).dropna().astype(str)
         predict_data = pd.read_csv(predict_file).dropna().astype(str)
 
-        st.session_state.train_data_isolation = train_data
-        st.session_state.predict_data_isolation = predict_data
+        if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
+            st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
+            return
 
-        st.write("Dữ liệu huấn luyện:")
-        st.dataframe(train_data)
+        combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
+        train_encoded = combined_data.iloc[:len(train_data)]
+        predict_encoded = combined_data.iloc[len(train_data):]
 
-        st.write("Dữ liệu dự đoán:")
-        st.dataframe(predict_data)
+        if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
+            st.info("Mô hình đã tồn tại. Dùng để dự đoán.")
+            model = load_isolation_forest_model()
+        else:
+            if st.button("Huấn luyện mô hình"):
+                model = train_isolation_forest_model(train_encoded)
+                joblib.dump(model, ISOLATION_FOREST_MODEL_FILE)
+                st.success(f"Mô hình đã được lưu vào {ISOLATION_FOREST_MODEL_FILE}.")
 
-        # Preprocess and train the model
-        preprocessed_train_data, _ = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
-        model = train_isolation_forest_model(preprocessed_train_data)
+        predictions = predict_with_isolation_forest_model(model, predict_encoded)
+        predict_encoded['Prediction'] = ['Bình thường' if p == 1 else 'Bất thường' for p in predictions]
+        st.dataframe(predict_encoded)
 
-        # Preprocess predict data
-        preprocessed_predict_data, _ = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
-        predictions = predict_with_isolation_forest_model(model, preprocessed_predict_data)
-        preprocessed_predict_data['Prediction'] = predictions
-        
-        st.write("Kết quả dự đoán:")
-        st.dataframe(preprocessed_predict_data)
-
-        # Hiển thị kết quả dự đoán
-        st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
-        st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
-
-        '''
-        # Tải kết quả dự đoán
+        # Plotting
+        plot_prediction_chart(predict_encoded, 'Prediction', 'Số lượng dự đoán', 'Số lượng', key='prediction_count_chart')
+        plot_prediction_percent_chart(predict_encoded, 'Prediction', 'Tỷ lệ dự đoán', 'Tỷ lệ', key='prediction_percent_chart')
         st.download_button("Tải CSV kết quả dự đoán", 
-                            data=predict_data.to_csv(index=False).encode('utf-8'), 
-                            file_name='isolation_forest_predictions.csv', 
-                            mime='text/csv')
-        '''
-        with st.expander("Trực quan hóa kết quả...", expanded=True):
-        # Biểu đồ
-        plot_prediction_chart(predict_data, 'distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác', key='key1')
-        plot_prediction_percent_chart(predict_data, 'distribution_channel', 'Tỷ lệ % bất thường theo kênh khai thác:', 'Kênh khai thác', key='key2')
-              
-        plot_prediction_chart(predict_data, 'branch', 'Số lượng bất thường theo chi nhánh:', 'Chi nhánh', key='key3')
-        plot_prediction_percent_chart(predict_data, 'branch', 'Tỷ lệ % bất thường theo chi nhánh:', 'Chi nhánh', key='key4')
-                
-        plot_prediction_chart(predict_data, 'hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện', key='key5')
-        plot_prediction_percent_chart(predict_data, 'hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện', key='key6')
+                        data=predict_encoded.to_csv(index=False).encode('utf-8'), 
+                        file_name='isolation_forest_prediction_results.csv', 
+                        mime='text/csv')
 
-
-# Main Application
+# Main Streamlit App
 def app():
-    selected_option = option_menu(menu_title=None, options=['Sức khoẻ','Xe cơ gới','Kế toán'], 
-                                  icons=['activity','car-front-fill','currency-exchange'], menu_icon="cast", 
-                                  default_index=0, orientation="horizontal")
-    if selected_option == 'Kế toán':
+    st.title("Phát hiện bất thường trong dữ liệu tài chính và bảo hiểm sức khỏe")
+    
+    with st.sidebar:
+        selected_option = option_menu("Menu", ["Kế Toán", "Sức Khỏe"], 
+                                       icons=["file-earmark-text", "person-heart"], 
+                                       menu_icon="cast", default_index=0)
+    
+    if selected_option == "Kế Toán":
         ke_toan_option()
-    elif selected_option == 'Sức khoẻ':
+    elif selected_option == "Sức Khỏe":
         suc_khoe_option()
+
 if __name__ == "__main__":
     app()
