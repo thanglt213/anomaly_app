@@ -137,71 +137,71 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 # Modul Kế toán
 def ke_toan_option():
     # Khởi tạo session_state nếu chưa tồn tại
-    if 'kmeans_model' not in st.session_state:
-        st.session_state['kmeans_model'] = None
-    if 'scaler' not in st.session_state:
-        st.session_state['scaler'] = None
-    if 'predicted_data' not in st.session_state:
-        st.session_state['predicted_data'] = None
-    if 'train_data' not in st.session_state:
-        st.session_state['train_data'] = None
-    if 'new_data' not in st.session_state:
-        st.session_state['new_data'] = None
+    if 'kt_kmeans_model' not in st.session_state:
+        st.session_state['kt_kmeans_model'] = None
+    if 'kt_scaler' not in st.session_state:
+        st.session_state['kt_scaler'] = None
+    if 'kt_predicted_data' not in st.session_state:
+        st.session_state['kt_predicted_data'] = None
+    if 'kt_train_data' not in st.session_state:
+        st.session_state['kt_train_data'] = None
+    if 'kt_new_data' not in st.session_state:
+        st.session_state['kt_new_data'] = None
 
     # Kiểm tra mô hình có tồn tại hay không
     if not os.path.exists(KMEANS_MODEL_FILE):
         st.info("Chưa có mô hình. Vui lòng tải dữ liệu để huấn luyện.")
-        uploaded_file = st.file_uploader("Tải file CSV để huấn luyện mô hình", type=['csv'])
-        if uploaded_file is not None:
-            data = pd.read_csv(uploaded_file)
-            st.session_state['train_data'] = data
-            train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
+        kt_uploaded_file = st.file_uploader("Tải file CSV để huấn luyện mô hình", type=['csv'])
+        if kt_uploaded_file is not None:
+            kt_data = pd.read_csv(kt_uploaded_file)
+            st.session_state['kt_train_data'] = kt_data
+            train_and_save_kmeans_model(kt_data, KMEANS_NUMERIC_FEATURES)
     else:
         st.success("Mô hình đã tồn tại.")
         # Huấn luyện lại mô hình nếu cần
         if st.button("Huấn luyện lại mô hình"):
             if os.path.exists(KMEANS_MODEL_FILE):
                 os.remove(KMEANS_MODEL_FILE)
-            retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
-            if retrain_file is not None:
-                data = pd.read_csv(retrain_file)
-                st.session_state['train_data'] = data
-                train_and_save_kmeans_model(data, KMEANS_NUMERIC_FEATURES)
+            kt_retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
+            if kt_retrain_file is not None:
+                kt_data = pd.read_csv(kt_retrain_file)
+                st.session_state['kt_train_data'] = kt_data
+                train_and_save_kmeans_model(kt_data, KMEANS_NUMERIC_FEATURES)
     
     # Dự đoán chỉ thực hiện khi mô hình tồn tại
     if os.path.exists(KMEANS_MODEL_FILE):
         # Load mô hình vào session_state nếu chưa có
-        if st.session_state['kmeans_model'] is None or st.session_state['scaler'] is None:
+        if st.session_state['kt_kmeans_model'] is None or st.session_state['kt_scaler'] is None:
             kmeans, scaler = load_kmeans_model()
-            st.session_state['kmeans_model'] = kmeans
-            st.session_state['scaler'] = scaler
+            st.session_state['kt_kmeans_model'] = kmeans
+            st.session_state['kt_scaler'] = scaler
         else:
-            kmeans = st.session_state['kmeans_model']
-            scaler = st.session_state['scaler']
+            kmeans = st.session_state['kt_kmeans_model']
+            scaler = st.session_state['kt_scaler']
     
         # Tải file dự đoán
-        new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
-        if new_file is not None:
-            new_data = pd.read_csv(new_file)
-            st.session_state['new_data'] = new_data
-            st.dataframe(new_data.head())
-            predicted_data = predict_with_kmeans_model(kmeans, scaler, new_data, KMEANS_NUMERIC_FEATURES)
-            st.session_state['predicted_data'] = predicted_data
+        kt_new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
+        if kt_new_file is not None:
+            kt_new_data = pd.read_csv(kt_new_file)
+            st.session_state['kt_new_data'] = kt_new_data
+            st.dataframe(kt_new_data.head())
+            predicted_data = predict_with_kmeans_model(kmeans, scaler, kt_new_data, KMEANS_NUMERIC_FEATURES)
+            st.session_state['kt_predicted_data'] = predicted_data
             st.dataframe(predicted_data.head())
-            
-    # Hiển thị dữ liệu huấn luyện nếu đã được tải lên
-    if st.session_state['train_data'] is not None:
-        st.write("Dữ liệu huấn luyện đã tải lên:")
-        st.dataframe(st.session_state['train_data'].head())
-    
+
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
-    if st.session_state['predicted_data'] is not None:
+    if st.session_state['kt_predicted_data'] is not None:
         st.write("Dữ liệu dự đoán hiện tại:")
-        st.dataframe(st.session_state['predicted_data'])
+        st.dataframe(st.session_state['kt_predicted_data'])
         st.download_button("Tải CSV kết quả dự đoán", 
-                           data=st.session_state['predicted_data'].to_csv(index=False).encode('utf-8'), 
+                           data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
                            file_name='kmeans_prediction_results.csv', 
                            mime='text/csv')
+
+    # Hiển thị dữ liệu huấn luyện nếu đã được tải lên
+    if st.session_state['kt_train_data'] is not None:
+        st.write("Dữ liệu huấn luyện đã tải lên:")
+        st.dataframe(st.session_state['kt_train_data'].head())
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
@@ -290,8 +290,6 @@ def suc_khoe_option():
                     plot_prediction_percent_chart(predict_data, *chart_info, key=chart_key)
                 else:
                     plot_prediction_chart(predict_data, *chart_info, key=chart_key)
-
-
 
 # Main Application
 def app():
