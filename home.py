@@ -172,19 +172,6 @@ def ke_toan_option():
         
 
 # Modul bảo hiểm sức khỏe        
-import streamlit as st
-import pandas as pd
-import numpy as np
-import os
-import joblib
-
-# Giả định bạn có các hàm cần thiết
-# preprocess_isolation_forest_data, load_isolation_forest_model, train_isolation_forest_model,
-# predict_with_isolation_forest_model, plot_prediction_chart, plot_prediction_percent_chart
-
-ISOLATION_FOREST_MODEL_FILE = 'isolation_forest_model.joblib'
-ISOLATION_NUMERIC_FEATURES = ['days_to_report', 'requested_amount_per_day']
-
 def suc_khoe_option():
     # Khởi tạo train_data và predict_data mặc định là None
     train_data = st.session_state.get('train_data', None)
@@ -278,7 +265,6 @@ def suc_khoe_option():
                 st.session_state.charts['branch_percent']
                 st.session_state.charts['hospital']
                 st.session_state.charts['hospital_percent']
-
 
 
 # Main Application
