@@ -183,7 +183,7 @@ def ke_toan_option():
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
         st.write("Dữ liệu dự đoán hiện tại:")
-        st.dataframe(st.session_state['kt_predicted_data'])
+        st.dataframe(st.session_state['kt_predicted_data'].head())
         st.download_button("Tải CSV kết quả dự đoán", 
                            data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
                            file_name='kmeans_prediction_results.csv', 
