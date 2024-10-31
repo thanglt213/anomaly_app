@@ -202,7 +202,7 @@ def suc_khoe_option():
         st.session_state.predictions = None
 
     # Load file dữ liệu huấn luyện và dự đoán
-    with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
+    with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=False):
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"])
         predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"])
 
