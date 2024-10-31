@@ -259,10 +259,14 @@ def suc_khoe_option():
                                        mime='text/csv')
 
     # Phần Trực quan hóa kết quả
+    # Visualization section
     with st.expander("Trực quan hóa kết quả...", expanded=True):
-        # Kiểm tra nếu có dữ liệu dự đoán
+        # Ensure predict_data is retrieved from session_state
+        predict_data = st.session_state.predict_data if 'predict_data' in st.session_state else None
+        
+        # Check if prediction data is available
         if predict_data is not None:
-            # Kiểm tra và tạo các biểu đồ nếu chưa có trong session_state
+            # Initialize charts data if not already done
             if 'charts_data' not in st.session_state:
                 st.session_state.charts_data = {
                     'distribution_channel': ('distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác'),
@@ -272,13 +276,16 @@ def suc_khoe_option():
                     'hospital': ('hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện'),
                     'hospital_percent': ('hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện')
                 }
-
-            # Vẽ biểu đồ từ dữ liệu lưu trữ trong session_state
+    
+            # Plot the charts from stored session state data
             for chart_key, chart_info in st.session_state.charts_data.items():
                 if 'percent' in chart_key:
                     plot_prediction_percent_chart(predict_data, *chart_info, key=chart_key)
                 else:
                     plot_prediction_chart(predict_data, *chart_info, key=chart_key)
+
+
+
 
 # Main Application
 def app():
