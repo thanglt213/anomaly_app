@@ -191,33 +191,40 @@ def ke_toan_option():
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
-    # Khởi tạo các dữ liệu cần thiết nếu chưa có trong session state
-    train_data = st.session_state.get('train_data', None)
-    predict_data = st.session_state.get('predict_data', None)
-    model = st.session_state.get('model', None)
+def suc_khoe_option():
+    # Initialize session state if not present
+    if 'train_data' not in st.session_state:
+        st.session_state.train_data = None
+    if 'predict_data' not in st.session_state:
+        st.session_state.predict_data = None
+    if 'model' not in st.session_state:
+        st.session_state.model = None
+    if 'predictions' not in st.session_state:
+        st.session_state.predictions = None
 
-    # Phần tải dữ liệu và dự đoán
+    # File upload section
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
-        # Tải lên file dữ liệu và lưu vào session state
-        train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"], key='train_isolation_forest')
-        predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"], key='predict_isolation_forest')
+        train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"])
+        predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"])
 
-        # Kiểm tra nếu file đã được tải lên
-        if train_file and predict_file:
-            if 'train_data' not in st.session_state:
-                train_data = pd.read_csv(train_file).dropna().astype(str)
-                st.session_state.train_data = train_data
-            if 'predict_data' not in st.session_state:
-                predict_data = pd.read_csv(predict_file).dropna().astype(str)
-                st.session_state.predict_data = predict_data
+        if train_file:
+            st.session_state.train_data = pd.read_csv(train_file).dropna().astype(str)
+            st.session_state.train_data = st.session_state.train_data
 
-        # Kiểm tra nếu dữ liệu đã được tải và có cột cần thiết
-        if train_data is not None and predict_data is not None:
+        if predict_file:
+            st.session_state.predict_data = pd.read_csv(predict_file).dropna().astype(str)
+
+        # Ensure that both files are uploaded
+        if st.session_state.train_data is not None and st.session_state.predict_data is not None:
+            train_data = st.session_state.train_data
+            predict_data = st.session_state.predict_data
+
+            # Check required columns
             if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
                 st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
                 return
 
-            # Tiền xử lý dữ liệu nếu chưa có trong session_state
+            # Preprocess data
             if 'combined_data' not in st.session_state:
                 combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
                 st.session_state.combined_data = combined_data
@@ -227,33 +234,30 @@ def suc_khoe_option():
             train_encoded = combined_data.iloc[:len(train_data)]
             predict_encoded = combined_data.iloc[len(train_data):]
 
-            # Kiểm tra mô hình hoặc huấn luyện nếu chưa tồn tại
-            if 'model' not in st.session_state:
+            # Load or train the model
+            if st.session_state.model is None:
                 if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
                     st.session_state.model = load_isolation_forest_model()
                 elif st.button("Huấn luyện mô hình"):
                     st.session_state.model = train_isolation_forest_model(train_encoded)
                     joblib.dump(st.session_state.model, ISOLATION_FOREST_MODEL_FILE)
-            
-            model = st.session_state.model
 
-            # Dự đoán kết quả và lưu kết quả vào session_state
-            if 'predictions' not in st.session_state:
-                predictions = predict_with_isolation_forest_model(model, predict_encoded)
+            # Make predictions if the model exists
+            if st.session_state.model:
+                predictions = predict_with_isolation_forest_model(st.session_state.model, predict_encoded)
                 predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
                 st.session_state.predictions = predict_data
-            
-            # Hiển thị kết quả dự đoán
-            predict_data = st.session_state.predictions
-            st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
-            st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
-            
-            # Tải kết quả dự đoán
-            if st.button("Lưu kết quả dự đoán ra CSV"):
-                st.download_button("Tải CSV kết quả dự đoán", 
-                                   data=predict_data.to_csv(index=False).encode('utf-8'), 
-                                   file_name='isolation_forest_predictions.csv', 
-                                   mime='text/csv')
+
+                # Display results
+                st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
+                st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
+
+                # Download predictions
+                if st.button("Lưu kết quả dự đoán ra CSV"):
+                    st.download_button("Tải CSV kết quả dự đoán", 
+                                       data=predict_data.to_csv(index=False).encode('utf-8'), 
+                                       file_name='isolation_forest_predictions.csv', 
+                                       mime='text/csv')
 
     # Phần Trực quan hóa kết quả
     with st.expander("Trực quan hóa kết quả...", expanded=True):
