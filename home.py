@@ -174,16 +174,16 @@ def ke_toan_option():
         if kt_new_file is not None:
             kt_new_data = pd.read_csv(kt_new_file)
             st.session_state['kt_new_data'] = kt_new_data
-            predicted_data = predict_with_kmeans_model(st.session_state['kt_kmeans_model'],
+            kt_predicted_data = predict_with_kmeans_model(st.session_state['kt_kmeans_model'],
                                                        st.session_state['kt_scaler'],
                                                        kt_new_data,
                                                        KMEANS_NUMERIC_FEATURES)
-            st.session_state['kt_predicted_data'] = predicted_data
+            st.session_state['kt_predicted_data'] = kt_predicted_data
 
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
         st.write("Dữ liệu dự đoán hiện tại:")
-        st.dataframe(st.session_state['kt_predicted_data'])
+        st.dataframe(st.session_state['kt_predicted_data'].head())
         st.download_button("Tải CSV kết quả dự đoán", 
                            data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
                            file_name='kmeans_prediction_results.csv', 
