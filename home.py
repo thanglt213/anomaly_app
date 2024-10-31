@@ -75,6 +75,10 @@ def train_and_save_kmeans_model(data, features, optimal_k=4):
 
     st.success(f"Mô hình đã được huấn luyện và lưu vào {KMEANS_MODEL_FILE}.")
 
+# Hàm lưu mô hình KMeans vào file
+def save_kmeans_model(kmeans_model, scaler):
+    with open(KMEANS_MODEL_FILE, 'wb') as f:
+        pickle.dump((kmeans_model, scaler), f)
 
 # Model Loading Functions
 def load_kmeans_model():
@@ -143,48 +147,37 @@ def ke_toan_option():
         st.session_state['kt_scaler'] = None
     if 'kt_predicted_data' not in st.session_state:
         st.session_state['kt_predicted_data'] = None
-    if 'kt_train_data' not in st.session_state:
-        st.session_state['kt_train_data'] = None
     if 'kt_new_data' not in st.session_state:
         st.session_state['kt_new_data'] = None
 
-    # Kiểm tra mô hình có tồn tại hay không
-    if not os.path.exists(KMEANS_MODEL_FILE):
-        st.info("Chưa có mô hình. Vui lòng tải dữ liệu để huấn luyện.")
-        kt_uploaded_file = st.file_uploader("Tải file CSV để huấn luyện mô hình", type=['csv'])
-        if kt_uploaded_file is not None:
-            kt_data = pd.read_csv(kt_uploaded_file)
-            st.session_state['kt_train_data'] = kt_data
-            train_and_save_kmeans_model(kt_data, KMEANS_NUMERIC_FEATURES)
-    else:
-        st.success("Mô hình đã tồn tại.")
-        # Huấn luyện lại mô hình nếu cần
-        if st.button("Huấn luyện lại mô hình"):
-            if os.path.exists(KMEANS_MODEL_FILE):
-                os.remove(KMEANS_MODEL_FILE)
-            kt_retrain_file = st.file_uploader("Tải file CSV để huấn luyện lại mô hình", type=['csv'])
-            if kt_retrain_file is not None:
-                kt_data = pd.read_csv(kt_retrain_file)
-                st.session_state['kt_train_data'] = kt_data
-                train_and_save_kmeans_model(kt_data, KMEANS_NUMERIC_FEATURES)
-    
-    # Dự đoán chỉ thực hiện khi mô hình tồn tại
+    # Kiểm tra và tải mô hình nếu file tồn tại
     if os.path.exists(KMEANS_MODEL_FILE):
-        # Load mô hình vào session_state nếu chưa có
         if st.session_state['kt_kmeans_model'] is None or st.session_state['kt_scaler'] is None:
             kt_kmeans, kt_scaler = load_kmeans_model()
             st.session_state['kt_kmeans_model'] = kt_kmeans
             st.session_state['kt_scaler'] = kt_scaler
-        else:
-            kt_kmeans = st.session_state['kt_kmeans_model']
-            kt_scaler = st.session_state['kt_scaler']
-    
-        # Tải file dự đoán
+            st.success("Mô hình đã được tải thành công.")
+    else:
+        st.warning("Mô hình chưa tồn tại. Vui lòng tải mô hình KMeans đã được huấn luyện sẵn.")
+        model_file = st.file_uploader("Tải file mô hình KMeans (.pkl)", type=['pkl'])
+        if model_file is not None:
+            kt_kmeans, kt_scaler = pickle.load(model_file)
+            st.session_state['kt_kmeans_model'] = kt_kmeans
+            st.session_state['kt_scaler'] = kt_scaler
+            save_kmeans_model(kt_kmeans, kt_scaler)
+            st.success("Mô hình đã được lưu và tải thành công.")
+
+    # Dự đoán chỉ thực hiện khi mô hình đã được tải thành công
+    if st.session_state['kt_kmeans_model'] is not None:
+        # Tải file dữ liệu dự đoán
         kt_new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
         if kt_new_file is not None:
             kt_new_data = pd.read_csv(kt_new_file)
             st.session_state['kt_new_data'] = kt_new_data
-            predicted_data = predict_with_kmeans_model(kt_kmeans, kt_scaler, kt_new_data, KMEANS_NUMERIC_FEATURES)
+            predicted_data = predict_with_kmeans_model(st.session_state['kt_kmeans_model'],
+                                                       st.session_state['kt_scaler'],
+                                                       kt_new_data,
+                                                       KMEANS_NUMERIC_FEATURES)
             st.session_state['kt_predicted_data'] = predicted_data
 
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
