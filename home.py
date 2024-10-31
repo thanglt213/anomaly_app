@@ -191,7 +191,7 @@ def ke_toan_option():
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
-    # Initialize session state if not present
+    # Khởi tạo session nếu chưa tồn tại
     if 'train_data' not in st.session_state:
         st.session_state.train_data = None
     if 'predict_data' not in st.session_state:
@@ -201,7 +201,7 @@ def suc_khoe_option():
     if 'predictions' not in st.session_state:
         st.session_state.predictions = None
 
-    # File upload section
+    # Load file dữ liệu huấn luyện và dự đoán
     with st.expander("Tải dữ liệu huấn luyện và dự đoán", expanded=True):
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"])
         predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"])
@@ -213,17 +213,11 @@ def suc_khoe_option():
         if predict_file:
             st.session_state.predict_data = pd.read_csv(predict_file).dropna().astype(str)
 
-        # Ensure that both files are uploaded
         if st.session_state.train_data is not None and st.session_state.predict_data is not None:
             train_data = st.session_state.train_data
             predict_data = st.session_state.predict_data
 
-            # Check required columns
-            if 'days_to_report' not in train_data.columns or 'requested_amount_per_day' not in train_data.columns:
-                st.error("Dữ liệu huấn luyện thiếu cột 'days_to_report' hoặc 'requested_amount_per_day'.")
-                return
-
-            # Preprocess data
+            # Xử lý dữ liệu
             if 'combined_data' not in st.session_state:
                 combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
                 st.session_state.combined_data = combined_data
@@ -233,7 +227,7 @@ def suc_khoe_option():
             train_encoded = combined_data.iloc[:len(train_data)]
             predict_encoded = combined_data.iloc[len(train_data):]
 
-            # Load or train the model
+            # Tải/Huấn luyện mô hình
             if st.session_state.model is None:
                 if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
                     st.session_state.model = load_isolation_forest_model()
@@ -241,17 +235,17 @@ def suc_khoe_option():
                     st.session_state.model = train_isolation_forest_model(train_encoded)
                     joblib.dump(st.session_state.model, ISOLATION_FOREST_MODEL_FILE)
 
-            # Make predictions if the model exists
+            # Dự đoán
             if st.session_state.model:
                 predictions = predict_with_isolation_forest_model(st.session_state.model, predict_encoded)
                 predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
                 st.session_state.predictions = predict_data
 
-                # Display results
+                # Hiển thị kết quả
                 st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
                 st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
 
-                # Download predictions
+                # Download kết quả dự đoán
                 if st.button("Lưu kết quả dự đoán ra CSV"):
                     st.download_button("Tải CSV kết quả dự đoán", 
                                        data=predict_data.to_csv(index=False).encode('utf-8'), 
@@ -259,12 +253,11 @@ def suc_khoe_option():
                                        mime='text/csv')
 
     # Phần Trực quan hóa kết quả
-    # Visualization section
     with st.expander("Trực quan hóa kết quả...", expanded=True):
-        # Ensure predict_data is retrieved from session_state
+        # Lấy predict_data
         predict_data = st.session_state.predict_data if 'predict_data' in st.session_state else None
         
-        # Check if prediction data is available
+        # Nếu dữ liệu dùng để dự đoán đã tồn tại
         if predict_data is not None:
             # Initialize charts data if not already done
             if 'charts_data' not in st.session_state:
@@ -283,9 +276,6 @@ def suc_khoe_option():
                     plot_prediction_percent_chart(predict_data, *chart_info, key=chart_key)
                 else:
                     plot_prediction_chart(predict_data, *chart_info, key=chart_key)
-
-
-
 
 # Main Application
 def app():
