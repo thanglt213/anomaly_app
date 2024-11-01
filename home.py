@@ -198,6 +198,7 @@ def ke_toan_option():
         result['total_count'] = result.groupby('ten_don_vi')['so_chung_tu'].transform('sum')
         result = result.sort_values(by='total_count', ascending=False).drop(columns='total_count')
         # Hiển thị dữ liệu toàn khung
+        st.write("\nTổng hợp kết quả bộ chứng từ bất thường theo đơn vị:")
         st.dataframe(result, use_container_width=True)
 
         # Download kết quả dự đoán
