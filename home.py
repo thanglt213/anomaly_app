@@ -187,7 +187,7 @@ def ke_toan_option():
 
         # Hiển thị kết quả sơ bộ sắp xếp theo số lượng bất thường giảm dần theo đơn vị
         result = (
-            kt_predicted_data[kt_predicted_data['k_anomaly'] == True]
+            st.session_state['kt_predicted_data']['k_anomaly'] == True]
             .groupby(['ten_don_vi', 'debit_account_name'])
             .agg({'so_chung_tu': 'count', 'so_tien_chi_tiet': 'sum'})
             .reset_index()
