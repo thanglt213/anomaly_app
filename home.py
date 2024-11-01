@@ -184,6 +184,21 @@ def ke_toan_option():
     if st.session_state['kt_predicted_data'] is not None:
         st.write("Dữ liệu dự đoán hiện tại:")
         st.dataframe(st.session_state['kt_predicted_data'].head())
+
+        # Hiển thị kết quả sơ bộ sắp xếp theo số lượng bất thường giảm dần theo đơn vị
+        result = (
+            kt_predicted_data[kt_predicted_data['k_anomaly'] == True]
+            .groupby(['ten_don_vi', 'debit_account_name'])
+            .agg({'so_chung_tu': 'count', 'so_tien_chi_tiet': 'sum'})
+            .reset_index()
+            )
+
+        # Tính tổng số count cho từng 'ten_don_vi' và sắp xếp giảm dần
+        result['total_count'] = result.groupby('ten_don_vi')['so_chung_tu'].transform('sum')
+        result = result.sort_values(by='total_count', ascending=False).drop(columns='total_count')
+        st.dataframe(result)
+
+        # Download kết quả dự đoán
         st.download_button("Tải CSV kết quả dự đoán", 
                            data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
                            file_name='kmeans_prediction_results.csv', 
