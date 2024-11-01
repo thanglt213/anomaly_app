@@ -197,6 +197,7 @@ def ke_toan_option():
         # Tính tổng số count cho từng 'ten_don_vi' và sắp xếp giảm dần
         result['total_count'] = result.groupby('ten_don_vi')['so_chung_tu'].transform('sum')
         result = result.sort_values(by='total_count', ascending=False).drop(columns='total_count')
+        # Hiển thị dữ liệu toàn khung
         st.dataframe(result, use_container_width=True)
 
         # Download kết quả dự đoán
