@@ -208,6 +208,7 @@ def ke_toan_option():
                            mime='text/csv')
 
 # Modul bảo hiểm sức khỏe        
+# Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
     # Khởi tạo session nếu chưa tồn tại
     if 'train_data' not in st.session_state:
@@ -259,12 +260,17 @@ def suc_khoe_option():
             # Dự đoán
             if st.session_state.model:
                 predictions = predict_with_isolation_forest_model(st.session_state.model, predict_encoded)
-                predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
-                st.session_state.predictions = predict_data
+                
+                # Kiểm tra chiều dài của predictions và predict_data trước khi gán
+                if len(predictions) == len(predict_data):
+                    predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
+                    st.session_state.predictions = predict_data
 
-                # Hiển thị kết quả
-                st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
-                st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
+                    # Hiển thị kết quả
+                    st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
+                    st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
+                else:
+                    st.error("Chiều dài của dữ liệu dự đoán không khớp với chiều dài của dữ liệu đầu vào. Vui lòng kiểm tra lại dữ liệu đầu vào.")
 
                 # Download kết quả dự đoán
                 if st.button("Lưu kết quả dự đoán ra CSV"):
