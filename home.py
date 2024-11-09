@@ -224,19 +224,22 @@ def suc_khoe_option():
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"])
         predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"])
 
+        # Nếu có thay đổi dữ liệu huấn luyện hoặc dữ liệu dự đoán, tính lại `combined_data`
         if train_file:
             st.session_state.train_data = pd.read_csv(train_file).dropna().astype(str)
-            st.session_state.train_data = st.session_state.train_data
+            st.session_state.combined_data = None  # Đặt lại để tính toán lại khi có thay đổi dữ liệu
 
         if predict_file:
             st.session_state.predict_data = pd.read_csv(predict_file).dropna().astype(str)
+            st.session_state.combined_data = None  # Đặt lại để tính toán lại khi có thay đổi dữ liệu
 
+        # Nếu cả dữ liệu huấn luyện và dữ liệu dự đoán đều có mặt, tiến hành xử lý
         if st.session_state.train_data is not None and st.session_state.predict_data is not None:
             train_data = st.session_state.train_data
             predict_data = st.session_state.predict_data
 
-            # Xử lý dữ liệu
-            if 'combined_data' not in st.session_state:
+            # Chỉ tính toán lại `combined_data` nếu chưa có hoặc dữ liệu đã thay đổi
+            if st.session_state.combined_data is None:
                 combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
                 st.session_state.combined_data = combined_data
                 st.session_state.label_encoders = label_encoders
