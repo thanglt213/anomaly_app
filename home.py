@@ -168,33 +168,33 @@ def ke_toan_option():
         distance_to_centroid = np.min(kmeans.transform(scaled_data), axis=1)
         kt_new_data['distance_to_centroid'] = distance_to_centroid
         
-        # Chọn tỷ lệ bất thường từ 0% đến 10% để xác định điểm bất thường
-        if st.session_state['anomaly_percentile'] is None:
-            anomaly_percentile = st.slider(
-                label="Chọn tỷ lệ bất thường(%)", 
-                min_value=0.0, 
-                max_value=10.0, 
-                value=3.0,  # Giá trị mặc định
-                step=0.5,  # Bước nhảy
-                format="%.1f%%"  # Hiển thị giá trị theo phần trăm
-            )
-        else:
-            anomaly_percentile = st.slider(
-                label="Chọn tỷ lệ bất thường(%)", 
-                min_value=0.0, 
-                max_value=10.0, 
-                value=st.session_state['anomaly_percentile'],  # Giá trị mặc định
-                step=0.5,  # Bước nhảy
-                format="%.1f%%"  # Hiển thị giá trị theo phần trăm
-            )
+    # Chọn tỷ lệ bất thường từ 0% đến 10% để xác định điểm bất thường
+    if st.session_state['anomaly_percentile'] is None:
+        anomaly_percentile = st.slider(
+            label="Chọn tỷ lệ bất thường(%)", 
+            min_value=0.0, 
+            max_value=10.0, 
+            value=3.0,  # Giá trị mặc định
+            step=0.5,  # Bước nhảy
+            format="%.1f%%"  # Hiển thị giá trị theo phần trăm
+        )
+    else:
+        anomaly_percentile = st.slider(
+            label="Chọn tỷ lệ bất thường(%)", 
+            min_value=0.0, 
+            max_value=10.0, 
+            value=st.session_state['anomaly_percentile'],  # Giá trị mặc định
+            step=0.5,  # Bước nhảy
+            format="%.1f%%"  # Hiển thị giá trị theo phần trăm
+        )
         
-        st.session_state['anomaly_percentile'] = anomaly_percentile
+    st.session_state['anomaly_percentile'] = anomaly_percentile
         
-        # Xác định ngưỡng bất thường
-        threshold = np.percentile(distance_to_centroid, 100 - anomaly_percentile)
-        kt_new_data['k_anomaly'] = distance_to_centroid > threshold
+    # Xác định ngưỡng bất thường
+    threshold = np.percentile(distance_to_centroid, 100 - anomaly_percentile)
+    kt_new_data['k_anomaly'] = distance_to_centroid > threshold
 
-        st.session_state['kt_predicted_data'] = kt_new_data
+    st.session_state['kt_predicted_data'] = kt_new_data
         
     if st.session_state['kt_predicted_data'] is not None:
         # Hiển thị dữ liệu dự đoán
