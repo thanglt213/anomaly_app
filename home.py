@@ -93,7 +93,7 @@ def load_isolation_forest_model():
     return model
 
 # Prediction Functions
-def predict_with_kmeans_model(kmeans, scaler, new_data, features):
+def predict_with_kmeans_model(kmeans, scaler, new_data, features, anomaly_percentile):
     # Extract and prepare features for transformation
     X = new_data[features].copy()
     # Ensure DataFrame structure and column consistency
@@ -105,7 +105,7 @@ def predict_with_kmeans_model(kmeans, scaler, new_data, features):
     new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
     
     # Determine anomaly threshold
-    threshold = np.percentile(new_data['distance_to_centroid'], 95)
+    threshold = np.percentile(new_data['distance_to_centroid'], 100 - anomaly_percentile)
     new_data['k_anomaly'] = new_data['distance_to_centroid'] > threshold
     return new_data
     
@@ -166,7 +166,17 @@ def ke_toan_option():
             st.session_state['kt_scaler'] = kt_scaler
             save_kmeans_model(kt_kmeans, kt_scaler)
             st.success("Mô hình đã được lưu và tải thành công.")
-
+    
+    # Sử dụng slider để chọn tỷ lệ bất thường từ 0% đến 10%
+    percentage = st.slider(
+        label="Chọn tỷ lệ bất thường(%)", 
+        min_value=0.0, 
+        max_value=10.0, 
+        value=3.0,  # Giá trị mặc định
+        step=0.1,  # Bước nhảy
+        format="%.1f%%"  # Hiển thị giá trị theo phần trăm
+    )
+    
     # Dự đoán chỉ thực hiện khi mô hình đã được tải thành công
     if st.session_state['kt_kmeans_model'] is not None:
         # Tải file dữ liệu dự đoán
@@ -177,7 +187,8 @@ def ke_toan_option():
             kt_predicted_data = predict_with_kmeans_model(st.session_state['kt_kmeans_model'],
                                                        st.session_state['kt_scaler'],
                                                        kt_new_data,
-                                                       KMEANS_NUMERIC_FEATURES)
+                                                       KMEANS_NUMERIC_FEATURES,
+                                                       percentage)
             st.session_state['kt_predicted_data'] = kt_predicted_data
 
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
@@ -207,7 +218,6 @@ def ke_toan_option():
                            file_name='kmeans_prediction_results.csv', 
                            mime='text/csv')
 
-# Modul bảo hiểm sức khỏe        
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
     # Khởi tạo session nếu chưa tồn tại
