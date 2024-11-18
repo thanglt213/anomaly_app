@@ -138,10 +138,6 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 # Modul Kế toán
 def ke_toan_option():
     # Khởi tạo session_state nếu chưa tồn tại
-    if 'kt_kmeans_model' not in st.session_state:
-        st.session_state['kt_kmeans_model'] = None
-    if 'kt_scaler' not in st.session_state:
-        st.session_state['kt_scaler'] = None
     if 'kt_predicted_data' not in st.session_state:
         st.session_state['kt_predicted_data'] = None
     if 'kt_new_data' not in st.session_state:
@@ -149,98 +145,76 @@ def ke_toan_option():
     if 'anomaly_percentile' not in st.session_state:
         st.session_state['anomaly_percentile'] = None
 
-    # Kiểm tra và tải mô hình nếu file tồn tại
-    if os.path.exists(KMEANS_MODEL_FILE):
-        if st.session_state['kt_kmeans_model'] is None or st.session_state['kt_scaler'] is None:
-            kt_kmeans, kt_scaler = load_kmeans_model()
-            st.session_state['kt_kmeans_model'] = kt_kmeans
-            st.session_state['kt_scaler'] = kt_scaler
-            st.success("Mô hình đã được tải thành công.")
+    # Tải dữ liệu từ người dùng
+    kt_new_file = st.file_uploader("Tải file CSV để huấn luyện và dự đoán trên dữ liệu", type=['csv'])
+    if kt_new_file is not None:
+        kt_new_data = pd.read_csv(kt_new_file)
+        st.session_state['kt_new_data'] = kt_new_data
+        st.success("Dữ liệu đã được tải thành công.")
+
+        # Tiền xử lý dữ liệu
+        data_for_kmeans = kt_new_data[KMEANS_NUMERIC_FEATURES]
         
-            # Thêm nút để tải lại mô hình
-            reload_model = st.button("Tải lại mô hình")
-            if reload_model:
-                model_file = st.file_uploader("Tải file mô hình KMeans (.pkl) để thay thế mô hình hiện tại", type=['pkl'])
-                if model_file is not None:
-                    try:
-                        kt_kmeans, kt_scaler = pickle.load(model_file)
-                        st.session_state['kt_kmeans_model'] = kt_kmeans
-                        st.session_state['kt_scaler'] = kt_scaler
-                        save_kmeans_model(kt_kmeans, kt_scaler)
-                        st.success("Mô hình mới đã được tải và lưu thành công.")
-                    except Exception as e:
-                        st.error(f"Lỗi khi tải mô hình mới: {e}")
-    else:
-        st.warning("Mô hình chưa tồn tại. Vui lòng tải mô hình KMeans đã được huấn luyện sẵn.")
-        model_file = st.file_uploader("Tải file mô hình KMeans (.pkl)", type=['pkl'])
-        if model_file is not None:
-            try:
-                kt_kmeans, kt_scaler = pickle.load(model_file)
-                st.session_state['kt_kmeans_model'] = kt_kmeans
-                st.session_state['kt_scaler'] = kt_scaler
-                save_kmeans_model(kt_kmeans, kt_scaler)
-                st.success("Mô hình đã được lưu và tải thành công.")
-            except Exception as e:
-                st.error(f"Lỗi khi tải mô hình: {e}")
-    
-    # Dự đoán chỉ thực hiện khi mô hình đã được tải thành công
-    if st.session_state['kt_kmeans_model'] is not None:
-        # Tải file dữ liệu dự đoán
-        kt_new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
-        if kt_new_file is not None:
-            kt_new_data = pd.read_csv(kt_new_file)
-            st.session_state['kt_new_data'] = kt_new_data
-            kt_predicted_data = predict_with_kmeans_model(st.session_state['kt_kmeans_model'],
-                                                       st.session_state['kt_scaler'],
-                                                       kt_new_data,
-                                                       KMEANS_NUMERIC_FEATURES)
-            st.session_state['kt_predicted_data'] = kt_predicted_data
-            
-    if st.session_state['kt_predicted_data'] is not None:
-        # Sử dụng slider để chọn tỷ lệ bất thường từ 0% đến 10%
+        # Chuẩn hóa dữ liệu
+        scaler = StandardScaler()
+        scaled_data = scaler.fit_transform(data_for_kmeans)
+
+        # Xây dựng mô hình KMeans
+        num_clusters = st.slider("Chọn số lượng cụm (clusters)", min_value=2, max_value=10, value=3)
+        kmeans = KMeans(n_clusters=num_clusters)
+        kmeans.fit(scaled_data)
+        
+        # Dự đoán các điểm bất thường
+        distance_to_centroid = np.min(kmeans.transform(scaled_data), axis=1)
+        kt_new_data['distance_to_centroid'] = distance_to_centroid
+        
+        # Chọn tỷ lệ bất thường từ 0% đến 10% để xác định điểm bất thường
         if st.session_state['anomaly_percentile'] is None:
             anomaly_percentile = st.slider(
-                    label="Chọn tỷ lệ bất thường(%)", 
-                    min_value=0.0, 
-                    max_value=10.0, 
-                    value=3.0,  # Giá trị mặc định
-                    step=0.5,  # Bước nhảy
-                    format="%.1f%%"  # Hiển thị giá trị theo phần trăm
+                label="Chọn tỷ lệ bất thường(%)", 
+                min_value=0.0, 
+                max_value=10.0, 
+                value=3.0,  # Giá trị mặc định
+                step=0.5,  # Bước nhảy
+                format="%.1f%%"  # Hiển thị giá trị theo phần trăm
             )
         else:
-             anomaly_percentile = st.slider(
-                    label="Chọn tỷ lệ bất thường(%)", 
-                    min_value=0.0, 
-                    max_value=10.0, 
-                    value=st.session_state['anomaly_percentile'],  # Giá trị mặc định
-                    step=0.5,  # Bước nhảy
-                    format="%.1f%%"  # Hiển thị giá trị theo phần trăm
-            )           
+            anomaly_percentile = st.slider(
+                label="Chọn tỷ lệ bất thường(%)", 
+                min_value=0.0, 
+                max_value=10.0, 
+                value=st.session_state['anomaly_percentile'],  # Giá trị mặc định
+                step=0.5,  # Bước nhảy
+                format="%.1f%%"  # Hiển thị giá trị theo phần trăm
+            )
+        
         st.session_state['anomaly_percentile'] = anomaly_percentile
         
         # Xác định ngưỡng bất thường
-        kt_predicted_data = st.session_state['kt_predicted_data']
-        threshold = np.percentile(kt_predicted_data['distance_to_centroid'], 100 - st.session_state['anomaly_percentile'])
-        kt_predicted_data['k_anomaly'] = kt_predicted_data['distance_to_centroid'] > threshold    
+        threshold = np.percentile(distance_to_centroid, 100 - anomaly_percentile)
+        kt_new_data['k_anomaly'] = distance_to_centroid > threshold
 
-    # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
+        st.session_state['kt_predicted_data'] = kt_new_data
+        
     if st.session_state['kt_predicted_data'] is not None:
+        # Hiển thị dữ liệu dự đoán
         st.write("Dữ liệu dự đoán hiện tại:")
         st.dataframe(st.session_state['kt_predicted_data'].head())
-        
-        # Hiển thị kết quả sơ bộ sắp xếp theo số lượng bất thường giảm dần theo đơn vị
+
+        # Hiển thị kết quả sơ bộ sắp xếp theo số lượng bất thường giảm dần
         result = (
             st.session_state['kt_predicted_data']
             [st.session_state['kt_predicted_data']['k_anomaly'] == True]
             .groupby(['ten_don_vi', 'debit_account_name'])
             .agg({'so_chung_tu': 'count', 'so_tien_chi_tiet': 'sum'})
             .reset_index()
-            )
+        )
 
         # Tính tổng số count cho từng 'ten_don_vi' và sắp xếp giảm dần
         result['total_count'] = result.groupby('ten_don_vi')['so_chung_tu'].transform('sum')
         result = result.sort_values(by='total_count', ascending=False).drop(columns='total_count')
-        # Hiển thị dữ liệu toàn khung
+
+        # Hiển thị kết quả
         st.write("\nTổng hợp kết quả bộ chứng từ bất thường theo đơn vị:")
         st.dataframe(result, use_container_width=True)
 
