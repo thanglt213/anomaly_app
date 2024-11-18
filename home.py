@@ -192,9 +192,9 @@ def ke_toan_option():
             )
             st.session_state['anomaly_percentile'] = anomaly_percentile
         
-        # Xác định ngưỡng bất thường
-        threshold = np.percentile(kt_predicted_data['distance_to_centroid'], 100 - st.session_state['anomaly_percentile'])
-        kt_predicted_data['k_anomaly'] = kt_predicted_data['distance_to_centroid'] > threshold    
+            # Xác định ngưỡng bất thường
+            threshold = np.percentile(kt_predicted_data['distance_to_centroid'], 100 - st.session_state['anomaly_percentile'])
+            kt_predicted_data['k_anomaly'] = kt_predicted_data['distance_to_centroid'] > threshold    
 
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
