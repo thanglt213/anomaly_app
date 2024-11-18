@@ -173,7 +173,7 @@ def ke_toan_option():
         min_value=0.0, 
         max_value=10.0, 
         value=3.0,  # Giá trị mặc định
-        step=0.1,  # Bước nhảy
+        step=0.5,  # Bước nhảy
         format="%.1f%%"  # Hiển thị giá trị theo phần trăm
     )
     
