@@ -180,19 +180,20 @@ def ke_toan_option():
             st.session_state['kt_predicted_data'] = kt_predicted_data
             
     if st.session_state['kt_predicted_data'] is not None:
-        # Sử dụng slider để chọn tỷ lệ bất thường từ 0% đến 10%
-        anomaly_percentile = st.slider(
-            label="Chọn tỷ lệ bất thường(%)", 
-            min_value=0.0, 
-            max_value=10.0, 
-            value=3.0,  # Giá trị mặc định
-            step=0.5,  # Bước nhảy
-            format="%.1f%%"  # Hiển thị giá trị theo phần trăm
-        )
-        st.session_state['anomaly_percentile'] = anomaly_percentile
+        if st.session_state['anomaly_percentile'] is None:
+            # Sử dụng slider để chọn tỷ lệ bất thường từ 0% đến 10%
+            anomaly_percentile = st.slider(
+                label="Chọn tỷ lệ bất thường(%)", 
+                min_value=0.0, 
+                max_value=10.0, 
+                value=3.0,  # Giá trị mặc định
+                step=0.5,  # Bước nhảy
+                format="%.1f%%"  # Hiển thị giá trị theo phần trăm
+            )
+            st.session_state['anomaly_percentile'] = anomaly_percentile
         
         # Xác định ngưỡng bất thường
-        threshold = np.percentile(kt_predicted_data['distance_to_centroid'], 100 - anomaly_percentile)
+        threshold = np.percentile(kt_predicted_data['distance_to_centroid'], 100 - st.session_state['anomaly_percentile'])
         kt_predicted_data['k_anomaly'] = kt_predicted_data['distance_to_centroid'] > threshold    
 
     # Hiển thị dữ liệu dự đoán và nút tải xuống nếu có dữ liệu dự đoán
