@@ -211,6 +211,12 @@ def ke_toan_option():
         st.write("Dữ liệu dự đoán hiện tại:")
         st.dataframe(st.session_state['kt_predicted_data'].head())
 
+        # Download kết quả dự đoán
+        st.download_button("Tải CSV kết quả dự đoán", 
+                           data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
+                           file_name='kmeans_prediction_results.csv', 
+                           mime='text/csv')
+        
         # Hiển thị kết quả sơ bộ sắp xếp theo số lượng bất thường giảm dần theo đơn vị
         result = (
             st.session_state['kt_predicted_data']
@@ -227,11 +233,6 @@ def ke_toan_option():
         st.write("\nTổng hợp kết quả bộ chứng từ bất thường theo đơn vị:")
         st.dataframe(result, use_container_width=True)
 
-        # Download kết quả dự đoán
-        st.download_button("Tải CSV kết quả dự đoán", 
-                           data=st.session_state['kt_predicted_data'].to_csv(index=False).encode('utf-8'), 
-                           file_name='kmeans_prediction_results.csv', 
-                           mime='text/csv')
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
