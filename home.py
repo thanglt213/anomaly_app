@@ -136,6 +136,8 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 
 # Streamlit Pages
 # Modul Kế toán
+# Streamlit Pages
+# Modul Kế toán
 def ke_toan_option():
     # Khởi tạo session_state nếu chưa tồn tại
     if 'kt_kmeans_model' not in st.session_state:
@@ -149,54 +151,27 @@ def ke_toan_option():
     if 'anomaly_percentile' not in st.session_state:
         st.session_state['anomaly_percentile'] = 3.0  # Default anomaly percentile
 
-    # Kiểm tra và tải mô hình nếu file tồn tại
-    if os.path.exists(KMEANS_MODEL_FILE):
-        if st.session_state['kt_kmeans_model'] is None or st.session_state['kt_scaler'] is None:
-            kt_kmeans, kt_scaler = load_kmeans_model()
-            st.session_state['kt_kmeans_model'] = kt_kmeans
-            st.session_state['kt_scaler'] = kt_scaler
-            st.success("Mô hình đã được tải thành công.")
+    # Tải file dữ liệu huấn luyện
+    kt_train_file = st.file_uploader("Tải file CSV dữ liệu huấn luyện để xây dựng mô hình", type=['csv'])
+    if kt_train_file is not None:
+        # Đọc dữ liệu huấn luyện
+        kt_train_data = pd.read_csv(kt_train_file)
+        st.session_state['kt_new_data'] = kt_train_data
         
-        # Thêm nút để tải lại mô hình
-        reload_model = st.button("Tải lại mô hình")
-        if reload_model:
-            model_file = st.file_uploader("Tải file mô hình KMeans (.pkl) để thay thế mô hình hiện tại", type=['pkl'])
-            if model_file is not None:
-                try:
-                    kt_kmeans, kt_scaler = pickle.load(model_file)
-                    st.session_state['kt_kmeans_model'] = kt_kmeans
-                    st.session_state['kt_scaler'] = kt_scaler
-                    save_kmeans_model(kt_kmeans, kt_scaler)
-                    st.success("Mô hình mới đã được tải và lưu thành công.")
-                except Exception as e:
-                    st.error(f"Lỗi khi tải mô hình mới: {e}")
-    else:
-        st.warning("Mô hình chưa tồn tại. Vui lòng tải mô hình KMeans đã được huấn luyện sẵn.")
-        model_file = st.file_uploader("Tải file mô hình KMeans (.pkl)", type=['pkl'])
-        if model_file is not None:
-            try:
-                kt_kmeans, kt_scaler = pickle.load(model_file)
-                st.session_state['kt_kmeans_model'] = kt_kmeans
-                st.session_state['kt_scaler'] = kt_scaler
-                save_kmeans_model(kt_kmeans, kt_scaler)
-                st.success("Mô hình đã được lưu và tải thành công.")
-            except Exception as e:
-                st.error(f"Lỗi khi tải mô hình: {e}")
-    
-    # Dự đoán chỉ thực hiện khi mô hình đã được tải thành công
-    if st.session_state['kt_kmeans_model'] is not None:
-        # Tải file dữ liệu dự đoán
-        kt_new_file = st.file_uploader("Tải file CSV để dự đoán với mô hình", type=['csv'])
-        if kt_new_file is not None:
-            kt_new_data = pd.read_csv(kt_new_file)
-            st.session_state['kt_new_data'] = kt_new_data
-            kt_predicted_data = predict_with_kmeans_model(
-                st.session_state['kt_kmeans_model'],
-                st.session_state['kt_scaler'],
-                kt_new_data,
-                KMEANS_NUMERIC_FEATURES
-            )
-            st.session_state['kt_predicted_data'] = kt_predicted_data
+        # Tiến hành huấn luyện mô hình KMeans
+        kt_kmeans, kt_scaler = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
+        st.session_state['kt_kmeans_model'] = kt_kmeans
+        st.session_state['kt_scaler'] = kt_scaler
+        st.success("Mô hình đã được huấn luyện thành công.")
+        
+        # Dự đoán trên dữ liệu huấn luyện
+        kt_predicted_data = predict_with_kmeans_model(
+            st.session_state['kt_kmeans_model'],
+            st.session_state['kt_scaler'],
+            kt_train_data,
+            KMEANS_NUMERIC_FEATURES
+        )
+        st.session_state['kt_predicted_data'] = kt_predicted_data
 
     # Xử lý và hiển thị dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
@@ -241,6 +216,7 @@ def ke_toan_option():
             file_name='kmeans_prediction_results.csv', 
             mime='text/csv'
         )
+
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
     # Khởi tạo session nếu chưa tồn tại
