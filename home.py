@@ -87,6 +87,21 @@ def load_kmeans_model():
     #st.success("Mô hình đã được tải thành công.")
     return kmeans, scaler
 
+# Hàm huấn luyện mô hình KMeans
+def train_kmeans_model(data, numeric_features):
+    # Chọn các cột số từ dữ liệu huấn luyện
+    data_numeric = data[numeric_features]
+    
+    # Chuẩn hóa dữ liệu
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data_numeric)
+    
+    # Huấn luyện mô hình KMeans
+    kmeans = KMeans(n_clusters=4, random_state=42)  # Số cụm có thể thay đổi tùy nhu cầu
+    kmeans.fit(data_scaled)
+    
+    return kmeans, scaler
+    
 def load_isolation_forest_model():
     model = joblib.load(ISOLATION_FOREST_MODEL_FILE)
     st.success("Mô hình đã được tải thành công.")
