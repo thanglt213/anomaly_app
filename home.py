@@ -156,15 +156,32 @@ def ke_toan_option():
             st.session_state['kt_kmeans_model'] = kt_kmeans
             st.session_state['kt_scaler'] = kt_scaler
             st.success("Mô hình đã được tải thành công.")
+        
+        # Thêm nút để tải lại mô hình
+        reload_model = st.button("Tải lại mô hình")
+        if reload_model:
+            model_file = st.file_uploader("Tải file mô hình KMeans (.pkl) để thay thế mô hình hiện tại", type=['pkl'])
+            if model_file is not None:
+                try:
+                    kt_kmeans, kt_scaler = pickle.load(model_file)
+                    st.session_state['kt_kmeans_model'] = kt_kmeans
+                    st.session_state['kt_scaler'] = kt_scaler
+                    save_kmeans_model(kt_kmeans, kt_scaler)
+                    st.success("Mô hình mới đã được tải và lưu thành công.")
+                except Exception as e:
+                    st.error(f"Lỗi khi tải mô hình mới: {e}")
     else:
         st.warning("Mô hình chưa tồn tại. Vui lòng tải mô hình KMeans đã được huấn luyện sẵn.")
         model_file = st.file_uploader("Tải file mô hình KMeans (.pkl)", type=['pkl'])
         if model_file is not None:
-            kt_kmeans, kt_scaler = pickle.load(model_file)
-            st.session_state['kt_kmeans_model'] = kt_kmeans
-            st.session_state['kt_scaler'] = kt_scaler
-            save_kmeans_model(kt_kmeans, kt_scaler)
-            st.success("Mô hình đã được lưu và tải thành công.")
+            try:
+                kt_kmeans, kt_scaler = pickle.load(model_file)
+                st.session_state['kt_kmeans_model'] = kt_kmeans
+                st.session_state['kt_scaler'] = kt_scaler
+                save_kmeans_model(kt_kmeans, kt_scaler)
+                st.success("Mô hình đã được lưu và tải thành công.")
+            except Exception as e:
+                st.error(f"Lỗi khi tải mô hình: {e}")
     
     # Dự đoán chỉ thực hiện khi mô hình đã được tải thành công
     if st.session_state['kt_kmeans_model'] is not None:
