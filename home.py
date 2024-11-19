@@ -57,13 +57,6 @@ def train_kmeans_model(data: pd.DataFrame, numeric_features: list):
     # Chỉ lấy các cột số
     data_numeric = data[numeric_features]
 
-    # Kiểm tra và xóa các dòng chứa giá trị NaN hoặc inf
-    data_numeric = data_numeric.replace([np.inf, -np.inf], np.nan)  # Thay inf bằng NaN
-    data_numeric = data_numeric.dropna()  # Xóa các dòng chứa NaN
-
-    if data_numeric.empty:
-        return None, None
-
     # Chuẩn hóa dữ liệu
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data_numeric)
@@ -74,18 +67,23 @@ def train_kmeans_model(data: pd.DataFrame, numeric_features: list):
 
     return kmeans, scaler
 
+
+
+
+
 # Dự đoán cụm và khoảng cách tới tâm cụm cho dữ liệu mới
 def predict_with_kmeans_model(kmeans, scaler, new_data, features):
-    # Extract and prepare features for transformation
+    """Dự đoán các cluster trên dữ liệu mới với mô hình KMeans."""
+    # Trích xuất và chuẩn bị các đặc trưng cho việc chuyển đổi
     X = new_data[features].copy()
-
-    # Ensure DataFrame structure and column consistency
+    
+    # Đảm bảo cấu trúc DataFrame và tính nhất quán của các cột
     X = pd.DataFrame(X, columns=scaler.feature_names_in_)
-
-    # Transform and predict clusters
-    X = scaler.transform(X)  # Ensure using scaler to transform data
-    new_data['cluster'] = kmeans.predict(X)
-    new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
+    
+    # Chuyển đổi và dự đoán các cluster
+    X_scaled = scaler.transform(X)  # Chuyển đổi dữ liệu mới
+    new_data['cluster'] = kmeans.predict(X_scaled)  # Dự đoán cluster
+    new_data['distance_to_centroid'] = np.min(kmeans.transform(X_scaled), axis=1)  # Tính khoảng cách đến tâm
 
     return new_data
 
@@ -152,39 +150,51 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 # Module Kế toán
 def ke_toan_option():
     # Khởi tạo session_state nếu chưa tồn tại
-    st.session_state.setdefault('kt_kmeans_model', None)
-    st.session_state.setdefault('kt_scaler', None)
-    st.session_state.setdefault('kt_predicted_data', None)
-    st.session_state.setdefault('kt_new_data', None)
-    st.session_state.setdefault('anomaly_percentile', 3.0)  # Default anomaly percentile
+    if 'kt_kmeans_model' not in st.session_state:
+        st.session_state['kt_kmeans_model'] = None
+    if 'kt_scaler' not in st.session_state:
+        st.session_state['kt_scaler'] = None
+    if 'kt_predicted_data' not in st.session_state:
+        st.session_state['kt_predicted_data'] = None
+    if 'kt_new_data' not in st.session_state:
+        st.session_state['kt_new_data'] = None
+    if 'anomaly_percentile' not in st.session_state:
+        st.session_state['anomaly_percentile'] = 3.0  # Default anomaly percentile
 
     # Tải file dữ liệu huấn luyện
     kt_train_file = st.file_uploader("Tải file CSV dữ liệu huấn luyện để xây dựng mô hình", type=['csv'])
+    
     if kt_train_file is not None:
-        st.write("Bắt đầu huấn luyện mô hình KMeans...")
-        
         # Đọc dữ liệu huấn luyện
         kt_train_data = pd.read_csv(kt_train_file)
         st.session_state['kt_new_data'] = kt_train_data
+
+        # Xử lý NaN và Inf
+        st.write("Đang xử lý dữ liệu NaN và Inf...")
+        kt_train_data = kt_train_data.replace([np.inf, -np.inf], np.nan)  # Thay inf bằng NaN
+        kt_train_data = kt_train_data.dropna()  # Loại bỏ các dòng chứa NaN
+        st.session_state['kt_new_data'] = kt_train_data
+        st.write("Số lượng dòng dữ liệu sau khi xử lý:", kt_train_data.shape[0])
+
+        # Kiểm tra xem dữ liệu còn lại sau khi xử lý có hợp lệ không
+        if kt_train_data.empty:
+            st.error("Dữ liệu sau khi xử lý bị loại bỏ hết các dòng có NaN hoặc Inf. Không có dữ liệu để huấn luyện!")
+            return
         
         # Tiến hành huấn luyện mô hình KMeans
-        try:
-            kt_kmeans, kt_scaler = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
-            st.session_state['kt_kmeans_model'] = kt_kmeans
-            st.session_state['kt_scaler'] = kt_scaler
-            st.success("Mô hình đã được huấn luyện thành công.")
-            
-            # Dự đoán trên dữ liệu huấn luyện
-            kt_predicted_data = predict_with_kmeans_model(
-                st.session_state['kt_kmeans_model'],
-                st.session_state['kt_scaler'],
-                kt_train_data,
-                KMEANS_NUMERIC_FEATURES
-            )
-            st.session_state['kt_predicted_data'] = kt_predicted_data
-        except Exception as e:
-            st.error(f"Đã xảy ra lỗi trong quá trình huấn luyện: {e}")
-            return
+        kt_kmeans, kt_scaler = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
+        st.session_state['kt_kmeans_model'] = kt_kmeans
+        st.session_state['kt_scaler'] = kt_scaler
+        st.success("Mô hình đã được huấn luyện thành công.")
+        
+        # Dự đoán trên dữ liệu huấn luyện
+        kt_predicted_data = predict_with_kmeans_model(
+            st.session_state['kt_kmeans_model'],
+            st.session_state['kt_scaler'],
+            kt_train_data,
+            KMEANS_NUMERIC_FEATURES
+        )
+        st.session_state['kt_predicted_data'] = kt_predicted_data
 
     # Xử lý và hiển thị dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
