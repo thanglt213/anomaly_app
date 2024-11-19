@@ -161,49 +161,46 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
 # Streamlit Pages
 # Module Kế toán
 def ke_toan_option():
-    """
-    Tùy chọn phân tích dữ liệu kế toán bằng KMeans.
-    """
     # Khởi tạo session_state nếu chưa tồn tại
-    if 'kt_kmeans_model' not in st.session_state:
-        st.session_state['kt_kmeans_model'] = None
-    if 'kt_predicted_data' not in st.session_state:
-        st.session_state['kt_predicted_data'] = None
-    if 'anomaly_percentile' not in st.session_state:
-        st.session_state['anomaly_percentile'] = 3.0  # Default anomaly percentile
+    st.session_state.setdefault('kt_kmeans_model', None)
+    st.session_state.setdefault('kt_scaler', None)
+    st.session_state.setdefault('kt_predicted_data', None)
+    st.session_state.setdefault('kt_new_data', None)
+    st.session_state.setdefault('anomaly_percentile', 3.0)  # Default anomaly percentile
 
     # Tải file dữ liệu huấn luyện
     kt_train_file = st.file_uploader("Tải file CSV dữ liệu huấn luyện để xây dựng mô hình", type=['csv'])
     if kt_train_file is not None:
+        st.write("Bắt đầu huấn luyện mô hình KMeans...")
+        
         # Đọc dữ liệu huấn luyện
         kt_train_data = pd.read_csv(kt_train_file)
+        st.session_state['kt_new_data'] = kt_train_data
         
-        # Tiến hành huấn luyện mô hình KMeans ngay khi tải dữ liệu mới
-        st.write("Đang xử lý và huấn luyện lại mô hình...")
-        kt_kmeans, processed_data = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
-        if kt_kmeans is None:
-            st.error("Không thể huấn luyện mô hình. Vui lòng kiểm tra dữ liệu!")
+        # Tiến hành huấn luyện mô hình KMeans
+        try:
+            kt_kmeans, kt_scaler = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
+            st.session_state['kt_kmeans_model'] = kt_kmeans
+            st.session_state['kt_scaler'] = kt_scaler
+            st.success("Mô hình đã được huấn luyện thành công.")
+            
+            # Dự đoán trên dữ liệu huấn luyện
+            kt_predicted_data = predict_with_kmeans_model(
+                st.session_state['kt_kmeans_model'],
+                st.session_state['kt_scaler'],
+                kt_train_data,
+                KMEANS_NUMERIC_FEATURES
+            )
+            st.session_state['kt_predicted_data'] = kt_predicted_data
+        except Exception as e:
+            st.error(f"Đã xảy ra lỗi trong quá trình huấn luyện: {e}")
             return
-        
-        # Lưu mô hình và dữ liệu đã xử lý vào session_state
-        st.session_state['kt_kmeans_model'] = kt_kmeans
-        st.session_state['kt_predicted_data'] = predict_with_kmeans_model(
-            st.session_state['kt_kmeans_model'],
-            st.session_state['kt_scaler'],
-            kt_train_data,
-            KMEANS_NUMERIC_FEATURES
-        )
-
-        if st.session_state['kt_predicted_data'] is not None:
-            st.success("Mô hình đã được huấn luyện và dữ liệu đã được dự đoán.")
-        else:
-            st.error("Không thể dự đoán dữ liệu! Vui lòng kiểm tra đầu vào.")
 
     # Xử lý và hiển thị dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
         # Chọn tỷ lệ bất thường từ 0% đến 10%
         anomaly_percentile = st.slider(
-            label="Chọn tỷ lệ bất thường (%)", 
+            label="Chọn tỷ lệ bất thường(%)", 
             min_value=0.0, 
             max_value=10.0, 
             value=st.session_state['anomaly_percentile'],  # Giá trị mặc định
@@ -242,6 +239,7 @@ def ke_toan_option():
             file_name='kmeans_prediction_results.csv', 
             mime='text/csv'
         )
+
 
 
 # Modul bảo hiểm sức khỏe        
