@@ -171,9 +171,6 @@ def ke_toan_option():
     if 'anomaly_percentile' not in st.session_state:
         st.session_state['anomaly_percentile'] = 3.0  # Default anomaly percentile
 
-    # Danh sách các đặc trưng số (KMEANS_NUMERIC_FEATURES)
-    KMEANS_NUMERIC_FEATURES = ['so_tien_chi_tiet', 'debit_account_value']
-
     # Tải file dữ liệu huấn luyện
     kt_train_file = st.file_uploader("Tải file CSV dữ liệu huấn luyện để xây dựng mô hình", type=['csv'])
     if kt_train_file is not None:
