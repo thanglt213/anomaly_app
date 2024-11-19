@@ -17,30 +17,7 @@ ISOLATION_FOREST_MODEL_FILE = 'isolation_forest_model.pkl'
 KMEANS_NUMERIC_FEATURES = ['ma_don_vi','credit_account', 'debit_account', 'so_tien_chi_tiet', 'id_loai_giao_dich']
 ISOLATION_NUMERIC_FEATURES = ['days_to_report', 'requested_amount_per_day']
 
-# Image Handling Functions
-def display_resized_image(image_path, new_height_divider=2):
-    image = Image.open(image_path)
-    width, height = image.size
-    resized_image = image.resize((width, height // new_height_divider))
-    st.image(resized_image, use_column_width=True)
-
 # Data Preprocessing Functions
-def preprocess_kmeans_data(train_data, predict_data, numeric_cols):
-    combined_data = pd.concat([train_data, predict_data], ignore_index=True)
-    combined_data[numeric_cols] = combined_data[numeric_cols].apply(pd.to_numeric, errors='coerce')
-    
-    label_encoders = {}
-    for col in combined_data.columns:
-        if combined_data[col].dtype == 'object':
-            le = LabelEncoder()
-            combined_data[col] = le.fit_transform(combined_data[col].fillna('Unknown'))
-            label_encoders[col] = le
-            
-    scaler = StandardScaler()
-    combined_data[numeric_cols] = scaler.fit_transform(combined_data[numeric_cols])
-    
-    return combined_data, label_encoders
-
 def preprocess_isolation_forest_data(train_data, predict_data, numeric_cols):
     combined_data = pd.concat([train_data, predict_data], ignore_index=True)
     combined_data[numeric_cols] = combined_data[numeric_cols].apply(pd.to_numeric, errors='coerce')
@@ -62,23 +39,6 @@ def train_isolation_forest_model(train_data, contamination_rate=0.05):
     model = IsolationForest(n_estimators=100, contamination=contamination_rate, random_state=42)
     model.fit(train_data.select_dtypes(include=[np.number]))
     return model
-
-def train_and_save_kmeans_model(data, features, optimal_k=4):
-    scaler = StandardScaler()
-    data[features] = scaler.fit_transform(data[features])
-    
-    kmeans = KMeans(n_clusters=optimal_k, init='k-means++', random_state=42)
-    kmeans.fit(data[features])
-
-    with open(KMEANS_MODEL_FILE, 'wb') as f:
-        pickle.dump((kmeans, scaler), f)
-
-    st.success(f"Mô hình đã được huấn luyện và lưu vào {KMEANS_MODEL_FILE}.")
-
-# Hàm lưu mô hình KMeans vào file
-def save_kmeans_model(kmeans_model, scaler):
-    with open(KMEANS_MODEL_FILE, 'wb') as f:
-        pickle.dump((kmeans_model, scaler), f)
 
 # Model Loading Functions
 def load_kmeans_model():
