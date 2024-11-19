@@ -72,32 +72,33 @@ def train_kmeans_model(data: pd.DataFrame, numeric_features: list):
     return kmeans, data_preprocessed
 
 # Dự đoán cụm và khoảng cách tới tâm cụm cho dữ liệu mới
-def predict_with_kmeans_model(kmeans, new_data: pd.DataFrame, numeric_features: list):
-    
-    if kmeans is None:
-        raise ValueError("Mô hình KMeans không hợp lệ. Vui lòng kiểm tra lại.")
+def predict_with_kmeans_model(kmeans, scaler, new_data: pd.DataFrame, numeric_features: list) -> pd.DataFrame:
+    """
+    Dự đoán với mô hình KMeans.
+    - Xử lý dữ liệu mới.
+    - Chuẩn hóa và gán cụm vào dữ liệu.
+    """
+    if kmeans is None or scaler is None:
+        raise ValueError("Mô hình KMeans hoặc scaler chưa được khởi tạo.")
 
-    # Bước 1: Xử lý NaN và Inf
-    st.write("Số lượng dòng trước khi xử lý NaN và Inf (dự đoán):", new_data.shape[0])
+    # Xử lý NaN và Inf
     data_cleaned = handle_missing_and_inf(new_data)
-    st.write("Số lượng dòng sau khi xử lý NaN và Inf (dự đoán):", data_cleaned.shape[0])
 
-    if data_cleaned.empty:
-        st.error("Dữ liệu sau khi xử lý không còn dòng nào! Vui lòng kiểm tra dữ liệu.")
-        return None
+    # Lọc các cột số
+    if not all(feature in data_cleaned.columns for feature in numeric_features):
+        raise ValueError("Thiếu các đặc trưng số trong dữ liệu mới.")
 
-    # Bước 2: Chuyển đổi, mã hóa và chuẩn hóa dữ liệu
-    st.write("Bắt đầu chuyển đổi và chuẩn hóa dữ liệu mới...")
-    data_preprocessed = transform_and_scale_data(data_cleaned, numeric_features)
-    st.write("Dữ liệu mới sau khi chuyển đổi và chuẩn hóa có dạng:", data_preprocessed.shape)
+    data_numeric = data_cleaned[numeric_features]
 
-    # Bước 3: Dự đoán cụm và khoảng cách đến tâm cụm
-    st.write("Bắt đầu dự đoán...")
-    new_data = data_cleaned.copy()  # Để lưu kết quả dự đoán
-    new_data['cluster'] = kmeans.predict(data_preprocessed)
-    new_data['distance_to_centroid'] = np.min(kmeans.transform(data_preprocessed), axis=1)
+    # Chuẩn hóa dữ liệu
+    data_scaled = scaler.transform(data_numeric)
 
-    return new_data
+    # Dự đoán cụm và tính khoảng cách tới tâm cụm
+    data_cleaned['cluster'] = kmeans.predict(data_scaled)
+    data_cleaned['distance_to_centroid'] = np.min(kmeans.transform(data_scaled), axis=1)
+
+    return data_cleaned
+
 
 
 # Hàm tiền xử lý dữ liệu Isolation forest
@@ -187,10 +188,12 @@ def ke_toan_option():
         # Lưu mô hình và dữ liệu đã xử lý vào session_state
         st.session_state['kt_kmeans_model'] = kt_kmeans
         st.session_state['kt_predicted_data'] = predict_with_kmeans_model(
-            kt_kmeans,
-            processed_data,
+            st.session_state['kt_kmeans_model'],
+            st.session_state['kt_scaler'],
+            kt_train_data,
             KMEANS_NUMERIC_FEATURES
         )
+
         if st.session_state['kt_predicted_data'] is not None:
             st.success("Mô hình đã được huấn luyện và dữ liệu đã được dự đoán.")
         else:
