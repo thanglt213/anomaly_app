@@ -340,7 +340,7 @@ def suc_khoe_option():
 
 # Main Application
 def app():
-    selected_option = option_menu(menu_title=None, options=['Sức khoẻ','Xe cơ gới','Kế toán'], 
+    selected_option = option_menu(menu_title=None, options=['Sức khoẻ','Kế toán'], 
                                   icons=['activity','car-front-fill','currency-exchange'], menu_icon="cast", 
                                   default_index=0, orientation="horizontal")
 
