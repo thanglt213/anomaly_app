@@ -17,7 +17,90 @@ ISOLATION_FOREST_MODEL_FILE = 'isolation_forest_model.pkl'
 KMEANS_NUMERIC_FEATURES = ['ma_don_vi','credit_account', 'debit_account', 'so_tien_chi_tiet', 'id_loai_giao_dich']
 ISOLATION_NUMERIC_FEATURES = ['days_to_report', 'requested_amount_per_day']
 
-# Data Preprocessing Functions
+
+# Hàm xử lý giá trị NaN và inf
+def handle_missing_and_inf(data: pd.DataFrame) -> pd.DataFrame:
+    data = data.replace([np.inf, -np.inf], np.nan)  # Thay thế Inf bằng NaN
+    data = data.dropna()  # Loại bỏ các dòng chứa NaN
+    return data
+
+# Hàm chuyển đổi, mã hóa và chuẩn hóa dữ liệu
+def transform_and_scale_data(data: pd.DataFrame, numeric_features: list) -> np.ndarray:
+    # Chuyển tất cả dữ liệu về kiểu str
+    data = data.astype(str)
+
+    # Chuyển các cột số sang kiểu Numeric
+    for col in numeric_features:
+        data[col] = pd.to_numeric(data[col], errors='coerce')
+    
+    # Loại bỏ các dòng có giá trị NaN trong các cột số (nếu có)
+    data = data.dropna(subset=numeric_features)
+
+    # Mã hóa các cột không phải số bằng Label Encoding
+    label_encoder = LabelEncoder()
+    non_numeric_features = [col for col in data.columns if col not in numeric_features]
+    for col in non_numeric_features:
+        data[col] = label_encoder.fit_transform(data[col])
+
+    # Chuẩn hóa dữ liệu bằng StandardScaler
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data)
+
+    return data_scaled
+
+# Huấn luyện mô hình KMeans.
+def train_kmeans_model(data: pd.DataFrame, numeric_features: list):
+    # Bước 1: Xử lý NaN và Inf
+    st.write("Số lượng dòng trước khi xử lý NaN và Inf:", data.shape[0])
+    data_cleaned = handle_missing_and_inf(data)
+    st.write("Số lượng dòng sau khi xử lý NaN và Inf:", data_cleaned.shape[0])
+
+    if data_cleaned.empty:
+        st.error("Dữ liệu sau khi xử lý không còn dòng nào! Vui lòng kiểm tra dữ liệu.")
+        return None, None
+
+    # Bước 2: Chuyển đổi, mã hóa và chuẩn hóa dữ liệu
+    st.write("Bắt đầu chuyển đổi và chuẩn hóa dữ liệu...")
+    data_preprocessed = transform_and_scale_data(data_cleaned, numeric_features)
+    st.write("Dữ liệu sau khi chuyển đổi và chuẩn hóa có dạng:", data_preprocessed.shape)
+
+    # Bước 3: Huấn luyện mô hình KMeans
+    st.write("Bắt đầu huấn luyện mô hình KMeans...")
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    kmeans.fit(data_preprocessed)
+
+    return kmeans, data_preprocessed
+
+# Dự đoán cụm và khoảng cách tới tâm cụm cho dữ liệu mới
+def predict_with_kmeans_model(kmeans, new_data: pd.DataFrame, numeric_features: list):
+    
+    if kmeans is None:
+        raise ValueError("Mô hình KMeans không hợp lệ. Vui lòng kiểm tra lại.")
+
+    # Bước 1: Xử lý NaN và Inf
+    st.write("Số lượng dòng trước khi xử lý NaN và Inf (dự đoán):", new_data.shape[0])
+    data_cleaned = handle_missing_and_inf(new_data)
+    st.write("Số lượng dòng sau khi xử lý NaN và Inf (dự đoán):", data_cleaned.shape[0])
+
+    if data_cleaned.empty:
+        st.error("Dữ liệu sau khi xử lý không còn dòng nào! Vui lòng kiểm tra dữ liệu.")
+        return None
+
+    # Bước 2: Chuyển đổi, mã hóa và chuẩn hóa dữ liệu
+    st.write("Bắt đầu chuyển đổi và chuẩn hóa dữ liệu mới...")
+    data_preprocessed = transform_and_scale_data(data_cleaned, numeric_features)
+    st.write("Dữ liệu mới sau khi chuyển đổi và chuẩn hóa có dạng:", data_preprocessed.shape)
+
+    # Bước 3: Dự đoán cụm và khoảng cách đến tâm cụm
+    st.write("Bắt đầu dự đoán...")
+    new_data = data_cleaned.copy()  # Để lưu kết quả dự đoán
+    new_data['cluster'] = kmeans.predict(data_preprocessed)
+    new_data['distance_to_centroid'] = np.min(kmeans.transform(data_preprocessed), axis=1)
+
+    return new_data
+
+
+# Hàm tiền xử lý dữ liệu Isolation forest
 def preprocess_isolation_forest_data(train_data, predict_data, numeric_cols):
     combined_data = pd.concat([train_data, predict_data], ignore_index=True)
     combined_data[numeric_cols] = combined_data[numeric_cols].apply(pd.to_numeric, errors='coerce')
@@ -34,53 +117,18 @@ def preprocess_isolation_forest_data(train_data, predict_data, numeric_cols):
     
     return combined_data, label_encoders
 
-# Model Training Functions
+# Hàm training isolation forest
 def train_isolation_forest_model(train_data, contamination_rate=0.05):
     model = IsolationForest(n_estimators=100, contamination=contamination_rate, random_state=42)
     model.fit(train_data.select_dtypes(include=[np.number]))
     return model
 
-# Model Loading Functions
-def load_kmeans_model():
-    with open(KMEANS_MODEL_FILE, 'rb') as f:
-        kmeans, scaler = pickle.load(f)
-    #st.success("Mô hình đã được tải thành công.")
-    return kmeans, scaler
 
-# Hàm huấn luyện mô hình KMeans
-def train_kmeans_model(data, numeric_features):
-    # Chọn các cột số từ dữ liệu huấn luyện
-    data_numeric = data[numeric_features]
-    
-    # Chuẩn hóa dữ liệu
-    scaler = StandardScaler()
-    data_scaled = scaler.fit_transform(data_numeric)
-    
-    # Huấn luyện mô hình KMeans
-    kmeans = KMeans(n_clusters=4, random_state=42)  # Số cụm có thể thay đổi tùy nhu cầu
-    kmeans.fit(data_scaled)
-    
-    return kmeans, scaler
-    
 def load_isolation_forest_model():
     model = joblib.load(ISOLATION_FOREST_MODEL_FILE)
     st.success("Mô hình đã được tải thành công.")
     return model
-
-# Prediction Functions
-def predict_with_kmeans_model(kmeans, scaler, new_data, features):
-    # Extract and prepare features for transformation
-    X = new_data[features].copy()
-    # Ensure DataFrame structure and column consistency
-    X = pd.DataFrame(X, columns=scaler.feature_names_in_)
-    
-    # Transform and predict clusters
-    X = scaler.transform(X)
-    new_data['cluster'] = kmeans.predict(X)
-    new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
-    
-    return new_data
-    
+ 
 def predict_with_isolation_forest_model(model, predict_encoded):
     predictions = model.predict(predict_encoded)
     return predictions
@@ -110,49 +158,52 @@ def plot_prediction_percent_chart(data, group_by_col, title, ylabel, key):
     st.plotly_chart(fig, key=key)
 
 # Streamlit Pages
-# Modul Kế toán
-# Streamlit Pages
-# Modul Kế toán
+# Module Kế toán
 def ke_toan_option():
+    """
+    Tùy chọn phân tích dữ liệu kế toán bằng KMeans.
+    """
     # Khởi tạo session_state nếu chưa tồn tại
     if 'kt_kmeans_model' not in st.session_state:
         st.session_state['kt_kmeans_model'] = None
-    if 'kt_scaler' not in st.session_state:
-        st.session_state['kt_scaler'] = None
     if 'kt_predicted_data' not in st.session_state:
         st.session_state['kt_predicted_data'] = None
-    if 'kt_new_data' not in st.session_state:
-        st.session_state['kt_new_data'] = None
     if 'anomaly_percentile' not in st.session_state:
         st.session_state['anomaly_percentile'] = 3.0  # Default anomaly percentile
+
+    # Danh sách các đặc trưng số (KMEANS_NUMERIC_FEATURES)
+    KMEANS_NUMERIC_FEATURES = ['so_tien_chi_tiet', 'debit_account_value']
 
     # Tải file dữ liệu huấn luyện
     kt_train_file = st.file_uploader("Tải file CSV dữ liệu huấn luyện để xây dựng mô hình", type=['csv'])
     if kt_train_file is not None:
         # Đọc dữ liệu huấn luyện
         kt_train_data = pd.read_csv(kt_train_file)
-        st.session_state['kt_new_data'] = kt_train_data
         
-        # Tiến hành huấn luyện mô hình KMeans
-        kt_kmeans, kt_scaler = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
+        # Tiến hành huấn luyện mô hình KMeans ngay khi tải dữ liệu mới
+        st.write("Đang xử lý và huấn luyện lại mô hình...")
+        kt_kmeans, processed_data = train_kmeans_model(kt_train_data, KMEANS_NUMERIC_FEATURES)
+        if kt_kmeans is None:
+            st.error("Không thể huấn luyện mô hình. Vui lòng kiểm tra dữ liệu!")
+            return
+        
+        # Lưu mô hình và dữ liệu đã xử lý vào session_state
         st.session_state['kt_kmeans_model'] = kt_kmeans
-        st.session_state['kt_scaler'] = kt_scaler
-        st.success("Mô hình đã được huấn luyện thành công.")
-        
-        # Dự đoán trên dữ liệu huấn luyện
-        kt_predicted_data = predict_with_kmeans_model(
-            st.session_state['kt_kmeans_model'],
-            st.session_state['kt_scaler'],
-            kt_train_data,
+        st.session_state['kt_predicted_data'] = predict_with_kmeans_model(
+            kt_kmeans,
+            processed_data,
             KMEANS_NUMERIC_FEATURES
         )
-        st.session_state['kt_predicted_data'] = kt_predicted_data
+        if st.session_state['kt_predicted_data'] is not None:
+            st.success("Mô hình đã được huấn luyện và dữ liệu đã được dự đoán.")
+        else:
+            st.error("Không thể dự đoán dữ liệu! Vui lòng kiểm tra đầu vào.")
 
     # Xử lý và hiển thị dữ liệu dự đoán
     if st.session_state['kt_predicted_data'] is not None:
         # Chọn tỷ lệ bất thường từ 0% đến 10%
         anomaly_percentile = st.slider(
-            label="Chọn tỷ lệ bất thường(%)", 
+            label="Chọn tỷ lệ bất thường (%)", 
             min_value=0.0, 
             max_value=10.0, 
             value=st.session_state['anomaly_percentile'],  # Giá trị mặc định
@@ -191,6 +242,7 @@ def ke_toan_option():
             file_name='kmeans_prediction_results.csv', 
             mime='text/csv'
         )
+
 
 # Modul bảo hiểm sức khỏe        
 def suc_khoe_option():
