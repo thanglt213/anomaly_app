@@ -50,54 +50,44 @@ def transform_and_scale_data(data: pd.DataFrame, numeric_features: list) -> np.n
 
 # Huấn luyện mô hình KMeans.
 def train_kmeans_model(data: pd.DataFrame, numeric_features: list):
-    # Bước 1: Xử lý NaN và Inf
-    st.write("Số lượng dòng trước khi xử lý NaN và Inf:", data.shape[0])
-    data_cleaned = handle_missing_and_inf(data)
-    st.write("Số lượng dòng sau khi xử lý NaN và Inf:", data_cleaned.shape[0])
+    """Huấn luyện mô hình KMeans với các đặc trưng số."""
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
 
-    if data_cleaned.empty:
-        st.error("Dữ liệu sau khi xử lý không còn dòng nào! Vui lòng kiểm tra dữ liệu.")
+    # Chỉ lấy các cột số
+    data_numeric = data[numeric_features]
+
+    # Kiểm tra và xóa các dòng chứa giá trị NaN hoặc inf
+    data_numeric = data_numeric.replace([np.inf, -np.inf], np.nan)  # Thay inf bằng NaN
+    data_numeric = data_numeric.dropna()  # Xóa các dòng chứa NaN
+
+    if data_numeric.empty:
         return None, None
 
-    # Bước 2: Chuyển đổi, mã hóa và chuẩn hóa dữ liệu
-    st.write("Bắt đầu chuyển đổi và chuẩn hóa dữ liệu...")
-    data_preprocessed = transform_and_scale_data(data_cleaned, numeric_features)
-    st.write("Dữ liệu sau khi chuyển đổi và chuẩn hóa có dạng:", data_preprocessed.shape)
+    # Chuẩn hóa dữ liệu
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data_numeric)
 
-    # Bước 3: Huấn luyện mô hình KMeans
-    st.write("Bắt đầu huấn luyện mô hình KMeans...")
+    # Huấn luyện KMeans
     kmeans = KMeans(n_clusters=3, random_state=42)
-    kmeans.fit(data_preprocessed)
+    kmeans.fit(data_scaled)
 
-    return kmeans, data_preprocessed
+    return kmeans, scaler
 
 # Dự đoán cụm và khoảng cách tới tâm cụm cho dữ liệu mới
-def predict_with_kmeans_model(kmeans, scaler, new_data: pd.DataFrame, numeric_features: list) -> pd.DataFrame:
-    """
-    Dự đoán với mô hình KMeans.
-    - Xử lý dữ liệu mới.
-    - Chuẩn hóa và gán cụm vào dữ liệu.
-    """
-    if kmeans is None or scaler is None:
-        raise ValueError("Mô hình KMeans hoặc scaler chưa được khởi tạo.")
+def predict_with_kmeans_model(kmeans, scaler, new_data, features):
+    # Extract and prepare features for transformation
+    X = new_data[features].copy()
 
-    # Xử lý NaN và Inf
-    data_cleaned = handle_missing_and_inf(new_data)
+    # Ensure DataFrame structure and column consistency
+    X = pd.DataFrame(X, columns=scaler.feature_names_in_)
 
-    # Lọc các cột số
-    if not all(feature in data_cleaned.columns for feature in numeric_features):
-        raise ValueError("Thiếu các đặc trưng số trong dữ liệu mới.")
+    # Transform and predict clusters
+    X = scaler.transform(X)  # Ensure using scaler to transform data
+    new_data['cluster'] = kmeans.predict(X)
+    new_data['distance_to_centroid'] = np.min(kmeans.transform(X), axis=1)
 
-    data_numeric = data_cleaned[numeric_features]
-
-    # Chuẩn hóa dữ liệu
-    data_scaled = scaler.transform(data_numeric)
-
-    # Dự đoán cụm và tính khoảng cách tới tâm cụm
-    data_cleaned['cluster'] = kmeans.predict(data_scaled)
-    data_cleaned['distance_to_centroid'] = np.min(kmeans.transform(data_scaled), axis=1)
-
-    return data_cleaned
+    return new_data
 
 
 
