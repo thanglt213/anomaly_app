@@ -259,7 +259,7 @@ def suc_khoe_option():
         train_file = st.file_uploader("Chọn file CSV huấn luyện", type=["csv"])
         predict_file = st.file_uploader("Chọn file CSV dự đoán", type=["csv"])
 
-        # Nếu có thay đổi dữ liệu huấn luyện hoặc dữ liệu dự đoán, tính lại `combined_data`
+        # Nếu có thay đổi dữ liệu huấn luyện hoặc dự đoán, tính lại `combined_data`
         if train_file:
             st.session_state.train_data = pd.read_csv(train_file).dropna().astype(str)
             st.session_state.combined_data = None  # Đặt lại để tính toán lại khi có thay đổi dữ liệu
@@ -268,14 +268,15 @@ def suc_khoe_option():
             st.session_state.predict_data = pd.read_csv(predict_file).dropna().astype(str)
             st.session_state.combined_data = None  # Đặt lại để tính toán lại khi có thay đổi dữ liệu
 
-        # Nếu cả dữ liệu huấn luyện và dữ liệu dự đoán đều có mặt, tiến hành xử lý
+        # Nếu cả dữ liệu huấn luyện và dự đoán đều có mặt, tiến hành xử lý
         if st.session_state.train_data is not None and st.session_state.predict_data is not None:
             train_data = st.session_state.train_data
             predict_data = st.session_state.predict_data
 
             # Chỉ tính toán lại `combined_data` nếu chưa có hoặc dữ liệu đã thay đổi
             if st.session_state.combined_data is None:
-                combined_data, label_encoders = preprocess_isolation_forest_data(train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
+                combined_data, label_encoders = preprocess_isolation_forest_data(
+                    train_data, predict_data, ISOLATION_NUMERIC_FEATURES)
                 st.session_state.combined_data = combined_data
                 st.session_state.label_encoders = label_encoders
 
@@ -283,44 +284,46 @@ def suc_khoe_option():
             train_encoded = combined_data.iloc[:len(train_data)]
             predict_encoded = combined_data.iloc[len(train_data):]
 
-            # Tải/Huấn luyện mô hình
+            # Tự động huấn luyện hoặc huấn luyện lại mô hình
             if st.session_state.model is None:
-                if os.path.exists(ISOLATION_FOREST_MODEL_FILE):
-                    st.session_state.model = load_isolation_forest_model()
-                elif st.button("Huấn luyện mô hình"):
-                    st.session_state.model = train_isolation_forest_model(train_encoded)
-                    joblib.dump(st.session_state.model, ISOLATION_FOREST_MODEL_FILE)
+                st.write("Chưa có mô hình, đang huấn luyện mô hình mới...")
+            else:
+                st.write("Mô hình đã tồn tại, huấn luyện lại với dữ liệu mới...")
 
-            # Dự đoán
-            if st.session_state.model:
-                predictions = predict_with_isolation_forest_model(st.session_state.model, predict_encoded)
-                
-                # Kiểm tra chiều dài của predictions và predict_data trước khi gán
-                if len(predictions) == len(predict_data):
-                    predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
-                    st.session_state.predictions = predict_data
+            st.session_state.model = train_isolation_forest_model(train_encoded)
+            joblib.dump(st.session_state.model, ISOLATION_FOREST_MODEL_FILE)
+            st.success("Huấn luyện xong mô hình và lưu vào file.")
 
-                    # Hiển thị kết quả
-                    st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
-                    st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']], use_container_width=True)
-                else:
-                    st.error("Chiều dài của dữ liệu dự đoán không khớp với chiều dài của dữ liệu đầu vào. Vui lòng kiểm tra lại dữ liệu đầu vào.")
+            # Thực hiện dự đoán
+            predictions = predict_with_isolation_forest_model(st.session_state.model, predict_encoded)
+
+            # Kiểm tra chiều dài của predictions và predict_data trước khi gán
+            if len(predictions) == len(predict_data):
+                predict_data['Prediction'] = np.where(predictions == -1, 'Bất thường', 'Bình thường')
+                st.session_state.predictions = predict_data
+
+                # Hiển thị kết quả
+                st.write(f"Số lượng bất thường: {sum(predict_data['Prediction'] == 'Bất thường')}/{len(predict_data)}")
+                st.dataframe(predict_data[['Prediction', 'branch', 'claim_no', 'distribution_channel', 'hospital']],
+                             use_container_width=True)
 
                 # Download kết quả dự đoán
                 if st.button("Lưu kết quả dự đoán ra CSV"):
-                    st.download_button("Tải CSV kết quả dự đoán", 
-                                       data=predict_data.to_csv(index=False).encode('utf-8'), 
-                                       file_name='isolation_forest_predictions.csv', 
+                    st.download_button("Tải CSV kết quả dự đoán",
+                                       data=predict_data.to_csv(index=False).encode('utf-8'),
+                                       file_name='isolation_forest_predictions.csv',
                                        mime='text/csv')
+            else:
+                st.error("Chiều dài của dữ liệu dự đoán không khớp với chiều dài của dữ liệu đầu vào. Vui lòng kiểm tra lại dữ liệu đầu vào.")
 
     # Phần Trực quan hóa kết quả
     with st.expander("Trực quan hóa kết quả...", expanded=True):
         # Lấy predict_data
         predict_data = st.session_state.predict_data if 'predict_data' in st.session_state else None
-        
-        # Nếu dữ liệu dùng để dự đoán đã tồn tại
-        if predict_data is not None:
-            # Initialize charts data if not already done
+
+        # Nếu dữ liệu dự đoán đã tồn tại và có cột Prediction
+        if predict_data is not None and 'Prediction' in predict_data.columns:
+            # Khởi tạo thông tin biểu đồ nếu chưa có
             if 'charts_data' not in st.session_state:
                 st.session_state.charts_data = {
                     'distribution_channel': ('distribution_channel', 'Số lượng bất thường theo kênh khai thác:', 'Kênh khai thác'),
@@ -330,13 +333,16 @@ def suc_khoe_option():
                     'hospital': ('hospital', 'Số lượng bất thường theo bệnh viện:', 'Bệnh viện'),
                     'hospital_percent': ('hospital', 'Tỷ lệ % bất thường theo bệnh viện:', 'Bệnh viện')
                 }
-    
-            # Plot the charts from stored session state data
+
+            # Vẽ biểu đồ
             for chart_key, chart_info in st.session_state.charts_data.items():
                 if 'percent' in chart_key:
                     plot_prediction_percent_chart(predict_data, *chart_info, key=chart_key)
                 else:
                     plot_prediction_chart(predict_data, *chart_info, key=chart_key)
+        else:
+            st.warning("Dữ liệu dự đoán chưa sẵn sàng hoặc chưa được xử lý. Vui lòng tải dữ liệu và thực hiện dự đoán trước.")
+
 
 # Main Application
 def app():
